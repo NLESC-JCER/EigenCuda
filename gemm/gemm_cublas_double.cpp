@@ -9,44 +9,43 @@
 #include <cxxopts.hpp>
 
 //col Major for CUDA
-typedef Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic,Eigen::ColMajor> Mat;
+typedef Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic,Eigen::ColMajor> Mat;
 
 Mat cublas_gemm(Mat A, Mat B)
 {
 
-    const float alpha = 1.;
-    const float beta = 0.;
-    const float *pa = &alpha;
-    const float *pb = &beta;
+    const double alpha = 1.;
+    const double beta = 0.;
+    const double *pa = &alpha;
+    const double *pb = &beta;
 
     int size = A.cols();
     Mat C = Mat::Zero(size,size);
 
     // and their pointers
-    float *hA = A.data();
-    float *hB = B.data();
-    float *hC = C.data();
+    double *hA = A.data();
+    double *hB = B.data();
+    double *hC = C.data();
 
     // alloc memory on the GPU
-    float *dA, *dB, *dC;
-    cudaMalloc(&dA,size*size*sizeof(float));
-    cudaMalloc(&dB,size*size*sizeof(float));
-    cudaMalloc(&dC,size*size*sizeof(float));
+    double *dA, *dB, *dC;
+    cudaMalloc(&dA,size*size*sizeof(double));
+    cudaMalloc(&dB,size*size*sizeof(double));
+    cudaMalloc(&dC,size*size*sizeof(double));
 
     // cuda handle
     cublasHandle_t handle;
     cublasCreate(&handle);
 
     // Transfer data to GPU
-    cudaMemcpy(dA,hA,size*size*sizeof(float),cudaMemcpyHostToDevice);
-    cudaMemcpy(dB,hB,size*size*sizeof(float),cudaMemcpyHostToDevice);
+    cudaMemcpy(dA,hA,size*size*sizeof(double),cudaMemcpyHostToDevice);
+    cudaMemcpy(dB,hB,size*size*sizeof(double),cudaMemcpyHostToDevice);
 
     // process on GPU
-    cublasSgemm(handle,CUBLAS_OP_N, CUBLAS_OP_N,size,size,size,pa,dA,size,dB,size,pb,dC,size);
-    //gpu_blas_gemm(handle,dA,dB,dC,size);
+    cublasDgemm(handle,CUBLAS_OP_N, CUBLAS_OP_N,size,size,size,pa,dA,size,dB,size,pb,dC,size);
 
     // send data back to CPU
-    cudaMemcpy(hC,dC,size*size*sizeof(float),cudaMemcpyDeviceToHost);
+    cudaMemcpy(hC,dC,size*size*sizeof(double),cudaMemcpyDeviceToHost);
     
     // create an eigen matrix
     C = Eigen::Map<Mat>(hC,size,size);
@@ -58,8 +57,8 @@ Mat cublas_gemm(Mat A, Mat B)
     cudaFree(dC);
 
     return C;
-
 }
+
 
 int main(int argc, char *argv[]) {
     
