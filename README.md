@@ -1,15 +1,27 @@
 # EigenCuda
 
-There is no CMAKE not test nor documentation and the code is ugly ! 
+This library is **Work in Progress**. There is no documentation and the code is ugly !
 
-## Installation 
+## CMake Installation
 
-Use the Makefile in each directory
+To compile execute:
+```
+cmake -H. -Bbuild && cmake --build build
+```
+
+To Debug compile as:
+```
+cmake -H. -Bbuild  -DCMAKE_BUILD_TYPE=Debug && cmake --build build
+```
 
 ## Dependencies
 
-  * Eigen
-  * CCXXOPTS : https://anaconda.org/conda-forge/cxxopts
+This packages assumes that you have installed the following packages:
+
+  
+  * [CXXOPTS](https://anaconda.org/conda-forge/cxxopts)
+  * [Cudatoolkit](https://anaconda.org/anaconda/cudatoolkit)
+  * [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page)
 
 ## Usage
 
