@@ -4,7 +4,6 @@ cmake_minimum_required(VERSION 3.5)
 # Project's name
 project(EigenCuda LANGUAGES CXX)
 
-
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CXX_FLAGS)
   #release comes with -O3 by default
   set(CMAKE_BUILD_TYPE Release CACHE STRING
@@ -18,14 +17,17 @@ set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 
 # Search for Cuda
-find_package(cuda REQUIRED)
+find_package(CUDA REQUIRED)
 
 # Search CXX options
-find_package(cxxopts REQUIRED)
+find_package(cxxopts REQUIRED
+  HINTS ${CONDA_PREFIX}/include
+)
 
 # search for Eigen
-find_package (Eigen3 3.3 REQUIRED NO_MODULE)
-include_directories(${EIGEN3_INCLUDE_DIR})
+find_package (Eigen3 3.3 REQUIRED CONFIG
+  HINTS ${CONDA_PREFIX}/include
+)
 message(STATUS "EIGEN Include: " ${EIGEN3_INCLUDE_DIR})
 
 add_subdirectory(src)
