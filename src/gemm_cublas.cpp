@@ -64,8 +64,13 @@ Mat<T> cublas_gemm(Mat<T> A, Mat<T> B, bool pinned=false) {
   cudaMemcpy(dB, hB, whole, cudaMemcpyHostToDevice);
 
   // process on GPU
+  if constexpr (sizeof(T) == sizeof(float)){
   cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, size, size, size, pa, dA, size,
               dB, size, pb, dC, size);
+    } else {
+    cublasDgemm(handle,CUBLAS_OP_N, CUBLAS_OP_N,size,size,size,pa,dA,size,
+		dB, size, pb, dC, size);
+}
 
   // send data back to CPU
   cudaMemcpy(hC, dC, whole, cudaMemcpyDeviceToHost);
