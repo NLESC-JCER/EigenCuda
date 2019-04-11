@@ -9,47 +9,51 @@
 #include <cxxopts.hpp>
 
 //col Major for CUDA
-typedef Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic,Eigen::ColMajor> Mat;
+// template <typename T>
+template <typename T>
+using Mat = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
 
-Mat cublas_gemm(Mat A, Mat B)
+
+template <typename T>
+Mat<T> cublas_gemm(Mat<T> A, Mat<T> B)
 {
 
-    const float alpha = 1.;
-    const float beta = 0.;
-    const float *pa = &alpha;
-    const float *pb = &beta;
+    constexpr T alpha = 1.;
+    constexpr T beta = 0.;
+    const T *pa = &alpha;
+    const T *pb = &beta;
 
     int size = A.cols();
-    Mat C = Mat::Zero(size,size);
+    Mat<T> C = Mat<T>::Zero(size,size);
 
     // and their pointers
-    float *hA = A.data();
-    float *hB = B.data();
-    float *hC = C.data();
+    T *hA = A.data();
+    T *hB = B.data();
+    T *hC = C.data();
 
     // alloc memory on the GPU
-    float *dA, *dB, *dC;
-    cudaMalloc(&dA,size*size*sizeof(float));
-    cudaMalloc(&dB,size*size*sizeof(float));
-    cudaMalloc(&dC,size*size*sizeof(float));
+    T *dA, *dB, *dC;
+    cudaMalloc(&dA,size*size*sizeof(T));
+    cudaMalloc(&dB,size*size*sizeof(T));
+    cudaMalloc(&dC,size*size*sizeof(T));
 
     // cuda handle
     cublasHandle_t handle;
     cublasCreate(&handle);
 
     // Transfer data to GPU
-    cudaMemcpy(dA,hA,size*size*sizeof(float),cudaMemcpyHostToDevice);
-    cudaMemcpy(dB,hB,size*size*sizeof(float),cudaMemcpyHostToDevice);
+    cudaMemcpy(dA,hA,size*size*sizeof(T),cudaMemcpyHostToDevice);
+    cudaMemcpy(dB,hB,size*size*sizeof(T),cudaMemcpyHostToDevice);
 
     // process on GPU
     cublasSgemm(handle,CUBLAS_OP_N, CUBLAS_OP_N,size,size,size,pa,dA,size,dB,size,pb,dC,size);
     //gpu_blas_gemm(handle,dA,dB,dC,size);
 
     // send data back to CPU
-    cudaMemcpy(hC,dC,size*size*sizeof(float),cudaMemcpyDeviceToHost);
+    cudaMemcpy(hC,dC,size*size*sizeof(T),cudaMemcpyDeviceToHost);
     
     // create an eigen matrix
-    C = Eigen::Map<Mat>(hC,size,size);
+    C = Eigen::Map<Mat<T>>(hC,size,size);
 
     // free memory
     cublasDestroy(handle);
@@ -73,14 +77,18 @@ int main(int argc, char *argv[]) {
     int size = std::stoi(result["size"].as<std::string>(),nullptr);
 
     // Create CPU matrices
-    Mat A = Mat::Random(size,size);
-    Mat B = Mat::Random(size,size);
+    Mat<float> A = Mat<float>::Random(size,size);
+    Mat<float> B = Mat<float>::Random(size,size);
 
     // chrono    
     std::chrono::time_point<std::chrono::system_clock> start, end;
 
     start = std::chrono::system_clock::now();
-    Mat C = cublas_gemm(A, B);
+    Mat<float> C = cublas_gemm(A, B);
+
+    // sum the result
+    auto s = C.sum();
+    std::cout << "sum is : " << s << "\n";
 
     // outputs
     end = std::chrono::system_clock::now();
