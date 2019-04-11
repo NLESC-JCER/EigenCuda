@@ -44,7 +44,7 @@ Mat<T> cublas_gemm(Mat<T> A, Mat<T> B, bool pinned = false) {
   T *dA, *dB, *dC;
 
   // Allocate either pageable or pinned memory
-  auto fun_alloc = [&] (T** x) {
+  auto fun_alloc = [&](T **x) {
     (pinned) ? cudaMallocHost(x, whole) : cudaMalloc(x, whole);
   };
 
@@ -78,9 +78,7 @@ Mat<T> cublas_gemm(Mat<T> A, Mat<T> B, bool pinned = false) {
   // free memory
   cublasDestroy(handle);
 
-  auto fun_free = [&pinned](T* x){
-    (pinned) ? cudaFreeHost(x) : cudaFree(x);
-  };
+  auto fun_free = [&pinned](T *x) { (pinned) ? cudaFreeHost(x) : cudaFree(x); };
 
   fun_free(dA);
   fun_free(dB);
