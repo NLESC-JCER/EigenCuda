@@ -12,15 +12,13 @@
 inline
 cudaError_t checkCuda(cudaError_t result)
 {
+#if defined(DEBUG) || defined(_DEBUG)
   if (result != cudaSuccess) {
-    fprintf(stderr, "CUDA Runtime Error: %s\n", 
-            cudaGetErrorString(result));
-    assert(result == cudaSuccess);
+    std::cerr << "CUDA Runtime Error: " << cudaGetErrorString(result) << "\n";
   }
+#endif
   return result;
 }
-
-
 
 // col Major for CUDA
 template <typename T>
@@ -29,12 +27,14 @@ using Mat = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
 template <typename T>
 Mat<T> cublas_gemm(Mat<T> A, Mat<T> B, bool pinned=false) {
 
+  // Scalar constanst for calling blas
   constexpr T alpha = 1.;
   constexpr T beta = 0.;
   const T *pa = &alpha;
   const T *pb = &beta;
 
-  int size = A.cols();
+  std::size_t size = A.cols();
+  std::size_t whole = size * size * sizeof(T);
   Mat<T> C = Mat<T>::Zero(size, size);
 
   // and their pointers
@@ -44,14 +44,15 @@ Mat<T> cublas_gemm(Mat<T> A, Mat<T> B, bool pinned=false) {
 
   // alloc memory on the GPU
   T *dA, *dB, *dC;
+
   if (pinned){
-    cudaMallocHost(&dA, size * size * sizeof(T));
-    cudaMallocHost(&dB, size * size * sizeof(T));
-    cudaMallocHost(&dC, size * size * sizeof(T));
+    cudaMallocHost(&dA, whole);
+    cudaMallocHost(&dB, whole);
+    cudaMallocHost(&dC, whole);
   } else {
-    cudaMalloc(&dA, size * size * sizeof(T));
-    cudaMalloc(&dB, size * size * sizeof(T));
-    cudaMalloc(&dC, size * size * sizeof(T));
+    cudaMalloc(&dA, whole);
+    cudaMalloc(&dB, whole);
+    cudaMalloc(&dC, whole);
 }
 
   // cuda handle
@@ -59,22 +60,22 @@ Mat<T> cublas_gemm(Mat<T> A, Mat<T> B, bool pinned=false) {
   cublasCreate(&handle);
 
   // Transfer data to GPU
-  cudaMemcpy(dA, hA, size * size * sizeof(T), cudaMemcpyHostToDevice);
-  cudaMemcpy(dB, hB, size * size * sizeof(T), cudaMemcpyHostToDevice);
+  cudaMemcpy(dA, hA, whole, cudaMemcpyHostToDevice);
+  cudaMemcpy(dB, hB, whole, cudaMemcpyHostToDevice);
 
   // process on GPU
   cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, size, size, size, pa, dA, size,
               dB, size, pb, dC, size);
-  // gpu_blas_gemm(handle,dA,dB,dC,size);
 
   // send data back to CPU
-  cudaMemcpy(hC, dC, size * size * sizeof(T), cudaMemcpyDeviceToHost);
+  cudaMemcpy(hC, dC, whole, cudaMemcpyDeviceToHost);
 
   // create an eigen matrix
   C = Eigen::Map<Mat<T>>(hC, size, size);
 
   // free memory
   cublasDestroy(handle);
+
   if (pinned) {
     cudaFreeHost(dA);
     cudaFreeHost(dB);
@@ -108,10 +109,10 @@ int main(int argc, char *argv[]) {
   cxxopts::Options options(argv[0], "gemm example using eigen");
   options.positional_help("[optional args]").show_positional_help();
   options.add_options()("size", "dimension of the matrix",
-                        cxxopts::value<std::string>()->default_value("100"));
+                        cxxopts::value<int>()->default_value("100"));
 
   auto result = options.parse(argc, argv);
-  int size = std::stoi(result["size"].as<std::string>(), nullptr);
+  int size = result["size"].as<int>();
 
   // Create CPU matrices
   Mat<float> A = Mat<float>::Random(size, size);
