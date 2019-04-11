@@ -1,3 +1,4 @@
+
 #include <Eigen/Core>
 #include <Eigen/Dense>
 #include <chrono>
@@ -6,7 +7,6 @@
 #include <curand.h>
 #include <cxxopts.hpp>
 #include <iostream>
-#include <stdlib.h>
 
 // Check Cuda error
 inline cudaError_t checkCuda(cudaError_t result) {
@@ -43,15 +43,14 @@ Mat<T> cublas_gemm(Mat<T> A, Mat<T> B, bool pinned = false) {
   // alloc memory on the GPU
   T *dA, *dB, *dC;
 
-  if (pinned) {
-    cudaMallocHost(&dA, whole);
-    cudaMallocHost(&dB, whole);
-    cudaMallocHost(&dC, whole);
-  } else {
-    cudaMalloc(&dA, whole);
-    cudaMalloc(&dB, whole);
-    cudaMalloc(&dC, whole);
-  }
+  // Allocate either pageable or pinned memory
+  auto fun_alloc = [&] (T** x) {
+    (pinned) ? cudaMallocHost(x, whole) : cudaMalloc(x, whole);
+  };
+
+  fun_alloc(&dA);
+  fun_alloc(&dB);
+  fun_alloc(&dC);
 
   // cuda handle
   cublasHandle_t handle;
@@ -79,15 +78,14 @@ Mat<T> cublas_gemm(Mat<T> A, Mat<T> B, bool pinned = false) {
   // free memory
   cublasDestroy(handle);
 
-  if (pinned) {
-    cudaFreeHost(dA);
-    cudaFreeHost(dB);
-    cudaFreeHost(dC);
-  } else {
-    cudaFree(dA);
-    cudaFree(dB);
-    cudaFree(dC);
-  }
+  auto fun_free = [&pinned](T* x){
+    (pinned) ? cudaFreeHost(x) : cudaFree(x);
+  };
+
+  fun_free(dA);
+  fun_free(dB);
+  fun_free(dC);
+
   return C;
 }
 
