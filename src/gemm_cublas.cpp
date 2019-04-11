@@ -9,9 +9,7 @@
 #include <stdlib.h>
 
 // Check Cuda error
-inline
-cudaError_t checkCuda(cudaError_t result)
-{
+inline cudaError_t checkCuda(cudaError_t result) {
 #if defined(DEBUG) || defined(_DEBUG)
   if (result != cudaSuccess) {
     std::cerr << "CUDA Runtime Error: " << cudaGetErrorString(result) << "\n";
@@ -25,7 +23,7 @@ template <typename T>
 using Mat = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
 
 template <typename T>
-Mat<T> cublas_gemm(Mat<T> A, Mat<T> B, bool pinned=false) {
+Mat<T> cublas_gemm(Mat<T> A, Mat<T> B, bool pinned = false) {
 
   // Scalar constanst for calling blas
   constexpr T alpha = 1.;
@@ -45,7 +43,7 @@ Mat<T> cublas_gemm(Mat<T> A, Mat<T> B, bool pinned=false) {
   // alloc memory on the GPU
   T *dA, *dB, *dC;
 
-  if (pinned){
+  if (pinned) {
     cudaMallocHost(&dA, whole);
     cudaMallocHost(&dB, whole);
     cudaMallocHost(&dC, whole);
@@ -53,7 +51,7 @@ Mat<T> cublas_gemm(Mat<T> A, Mat<T> B, bool pinned=false) {
     cudaMalloc(&dA, whole);
     cudaMalloc(&dB, whole);
     cudaMalloc(&dC, whole);
-}
+  }
 
   // cuda handle
   cublasHandle_t handle;
@@ -64,13 +62,13 @@ Mat<T> cublas_gemm(Mat<T> A, Mat<T> B, bool pinned=false) {
   cudaMemcpy(dB, hB, whole, cudaMemcpyHostToDevice);
 
   // process on GPU
-  if constexpr (sizeof(T) == sizeof(float)){
-  cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, size, size, size, pa, dA, size,
-              dB, size, pb, dC, size);
-    } else {
-    cublasDgemm(handle,CUBLAS_OP_N, CUBLAS_OP_N,size,size,size,pa,dA,size,
-		dB, size, pb, dC, size);
-}
+  if constexpr (sizeof(T) == sizeof(float)) {
+    cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, size, size, size, pa, dA,
+                size, dB, size, pb, dC, size);
+  } else {
+    cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, size, size, size, pa, dA,
+                size, dB, size, pb, dC, size);
+  }
 
   // send data back to CPU
   cudaMemcpy(hC, dC, whole, cudaMemcpyDeviceToHost);
@@ -89,12 +87,11 @@ Mat<T> cublas_gemm(Mat<T> A, Mat<T> B, bool pinned=false) {
     cudaFree(dA);
     cudaFree(dB);
     cudaFree(dC);
-}
+  }
   return C;
 }
 
-template <typename T>
-void benchmark(Mat<T> A, Mat<T> B, bool pinned=false) {
+template <typename T> void benchmark(Mat<T> A, Mat<T> B, bool pinned = false) {
   // chrono
   std::chrono::time_point<std::chrono::system_clock> start, end;
 
@@ -105,7 +102,6 @@ void benchmark(Mat<T> A, Mat<T> B, bool pinned=false) {
   end = std::chrono::system_clock::now();
   std::chrono::duration<double> elapsed_time = end - start;
   std::cout << "Run time: " << elapsed_time.count() << " secs\n";
-
 }
 
 int main(int argc, char *argv[]) {
