@@ -8,13 +8,26 @@
 #include <iostream>
 #include <stdlib.h>
 
+// Check Cuda error
+inline
+cudaError_t checkCuda(cudaError_t result)
+{
+  if (result != cudaSuccess) {
+    fprintf(stderr, "CUDA Runtime Error: %s\n", 
+            cudaGetErrorString(result));
+    assert(result == cudaSuccess);
+  }
+  return result;
+}
+
+
+
 // col Major for CUDA
-// template <typename T>
 template <typename T>
 using Mat = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
 
 template <typename T>
-Mat<T> cublas_gemm(Mat<T> A, Mat<T> B) {
+Mat<T> cublas_gemm(Mat<T> A, Mat<T> B, bool pinned=false) {
 
   constexpr T alpha = 1.;
   constexpr T beta = 0.;
@@ -31,9 +44,15 @@ Mat<T> cublas_gemm(Mat<T> A, Mat<T> B) {
 
   // alloc memory on the GPU
   T *dA, *dB, *dC;
-  cudaMalloc(&dA, size * size * sizeof(T));
-  cudaMalloc(&dB, size * size * sizeof(T));
-  cudaMalloc(&dC, size * size * sizeof(T));
+  if (pinned){
+    cudaMallocHost(&dA, size * size * sizeof(T));
+    cudaMallocHost(&dB, size * size * sizeof(T));
+    cudaMallocHost(&dC, size * size * sizeof(T));
+  } else {
+    cudaMalloc(&dA, size * size * sizeof(T));
+    cudaMalloc(&dB, size * size * sizeof(T));
+    cudaMalloc(&dC, size * size * sizeof(T));
+}
 
   // cuda handle
   cublasHandle_t handle;
@@ -56,11 +75,31 @@ Mat<T> cublas_gemm(Mat<T> A, Mat<T> B) {
 
   // free memory
   cublasDestroy(handle);
-  cudaFree(dA);
-  cudaFree(dB);
-  cudaFree(dC);
-
+  if (pinned) {
+    cudaFreeHost(dA);
+    cudaFreeHost(dB);
+    cudaFreeHost(dC);
+  } else {
+    cudaFree(dA);
+    cudaFree(dB);
+    cudaFree(dC);
+}
   return C;
+}
+
+template <typename T>
+void benchmark(Mat<T> A, Mat<T> B, bool pinned=false) {
+  // chrono
+  std::chrono::time_point<std::chrono::system_clock> start, end;
+
+  start = std::chrono::system_clock::now();
+  Mat<T> C = cublas_gemm(A, B);
+
+  // outputs
+  end = std::chrono::system_clock::now();
+  std::chrono::duration<double> elapsed_time = end - start;
+  std::cout << "Run time: " << elapsed_time.count() << " secs\n";
+
 }
 
 int main(int argc, char *argv[]) {
@@ -78,20 +117,10 @@ int main(int argc, char *argv[]) {
   Mat<float> A = Mat<float>::Random(size, size);
   Mat<float> B = Mat<float>::Random(size, size);
 
-  // chrono
-  std::chrono::time_point<std::chrono::system_clock> start, end;
-
-  start = std::chrono::system_clock::now();
-  Mat<float> C = cublas_gemm(A, B);
-
-  // sum the result
-  auto s = C.sum();
-  std::cout << "sum is : " << s << "\n";
-
-  // outputs
-  end = std::chrono::system_clock::now();
-  std::chrono::duration<double> elapsed_time = end - start;
-  std::cout << "Run time    : " << elapsed_time.count() << " secs" << std::endl;
+  std::cout << "Pageable Data Transfer\n";
+  benchmark<float>(A, B);
+  std::cout << "Pinned Data Transfer\n";
+  benchmark<float>(A, B, true);
 
   return 0;
 }
