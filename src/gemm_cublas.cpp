@@ -64,12 +64,10 @@ Mat<T> cublas_gemm(Mat<T> A, Mat<T> B, bool pinned = false) {
   cudaMemcpy(dB, hB, size_B, cudaMemcpyHostToDevice);
 
   // process on GPU
-  if
-    constexpr(std::is_same<float, T>::value) {
-      cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, A.rows(), B.cols(),
-                  A.cols(), pa, dA, A.rows(), dB, B.rows(), pb, dC, C.rows());
-    }
-  else {
+  if constexpr (std::is_same<float, T>::value) {
+    cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, A.rows(), B.cols(), A.cols(),
+                pa, dA, A.rows(), dB, B.rows(), pb, dC, C.rows());
+  } else {
     cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, A.rows(), B.cols(), A.cols(),
                 pa, dA, A.rows(), dB, B.rows(), pb, dC, C.rows());
   }
