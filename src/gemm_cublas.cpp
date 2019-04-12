@@ -32,7 +32,6 @@ Mat<T> cublas_gemm(Mat<T> A, Mat<T> B, bool pinned = false) {
   const T *pb = &beta;
 
   // Size of the Matrices
-  std::size_t size = A.cols();
   std::size_t size_A = A.rows() * A.cols() * sizeof(T);
   std::size_t size_B = A.cols() * B.cols() * sizeof(T);
   std::size_t size_C = A.rows() * B.cols() * sizeof(T);
