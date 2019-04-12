@@ -31,9 +31,13 @@ Mat<T> cublas_gemm(Mat<T> A, Mat<T> B, bool pinned = false) {
   const T *pa = &alpha;
   const T *pb = &beta;
 
+  // Size of the Matrices
   std::size_t size = A.cols();
-  std::size_t whole = size * size * sizeof(T);
-  Mat<T> C = Mat<T>::Zero(size, size);
+  std::size_t size_A = A.rows() * A.cols() * sizeof(T);
+  std::size_t size_B = A.cols() * B.cols() * sizeof(T);
+  std::size_t size_C = A.rows() * B.cols() * sizeof(T);
+
+  Mat<T> C = Mat<T>::Zero(A.rows(), B.cols());
 
   // and their pointers
   T *hA = A.data();
@@ -44,38 +48,38 @@ Mat<T> cublas_gemm(Mat<T> A, Mat<T> B, bool pinned = false) {
   T *dA, *dB, *dC;
 
   // Allocate either pageable or pinned memory
-  auto fun_alloc = [&](T **x) {
-    (pinned) ? cudaMallocHost(x, whole) : cudaMalloc(x, whole);
+  auto fun_alloc = [&](T **x, std::size_t n) {
+    (pinned) ? cudaMallocHost(x, n) : cudaMalloc(x, n);
   };
 
-  fun_alloc(&dA);
-  fun_alloc(&dB);
-  fun_alloc(&dC);
+  fun_alloc(&dA, size_A);
+  fun_alloc(&dB, size_B);
+  fun_alloc(&dC, size_C);
 
   // cuda handle
   cublasHandle_t handle;
   cublasCreate(&handle);
 
   // Transfer data to GPU
-  cudaMemcpy(dA, hA, whole, cudaMemcpyHostToDevice);
-  cudaMemcpy(dB, hB, whole, cudaMemcpyHostToDevice);
+  cudaMemcpy(dA, hA, size_A, cudaMemcpyHostToDevice);
+  cudaMemcpy(dB, hB, size_B, cudaMemcpyHostToDevice);
 
   // process on GPU
   if
     constexpr(std::is_same<float, T>::value) {
-      cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, size, size, size, pa, dA,
-                  size, dB, size, pb, dC, size);
+      cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, A.rows(), B.cols(),
+                  A.cols(), pa, dA, A.rows(), dB, B.rows(), pb, dC, C.rows());
     }
   else {
-    cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, size, size, size, pa, dA,
-                size, dB, size, pb, dC, size);
+    cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, A.rows(), B.cols(), A.cols(),
+                pa, dA, A.rows(), dB, B.rows(), pb, dC, C.rows());
   }
 
   // send data back to CPU
-  cudaMemcpy(hC, dC, whole, cudaMemcpyDeviceToHost);
+  cudaMemcpy(hC, dC, size_C, cudaMemcpyDeviceToHost);
 
   // create an eigen matrix
-  C = Eigen::Map<Mat<T>>(hC, size, size);
+  C = Eigen::Map<Mat<T>>(hC, A.rows(), B.cols());
 
   // free memory
   cublasDestroy(handle);

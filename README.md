@@ -1,6 +1,6 @@
 # EigenCuda
 
-This library is **Work in Progress**. There is no documentation and the code is ugly !
+This library is **Work in Progress**. There is no documentation!
 
 ## CMake Installation
 
