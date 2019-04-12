@@ -115,8 +115,8 @@ int main(int argc, char *argv[]) {
   int size = result["size"].as<int>();
 
   // Create CPU matrices
-  Mat<float> A = Mat<float>::Random(size, size);
-  Mat<float> B = Mat<float>::Random(size, size);
+  Mat<float> A = Mat<float>::Random(size+10, size);
+  Mat<float> B = Mat<float>::Random(size, size+20);
 
   std::cout << "Pageable Data Transfer\n";
   benchmark<float>(A, B);
