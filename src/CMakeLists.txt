@@ -1,3 +1,6 @@
+# headers
+include_directories(${PROJECT_SOURCE_DIR}/include)
+
 add_executable(gemm_cublas gemm_cublas.cpp)
 
 set_target_properties(gemm_cublas
