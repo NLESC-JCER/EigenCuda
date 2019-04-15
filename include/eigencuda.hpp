@@ -24,7 +24,7 @@ template <typename T>
 using Mat = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
 
 template <typename T>
-Mat<T> cublas_gemm(Mat<T> A, Mat<T> B, bool pinned = false) {
+Mat<T> cublas_gemm(Mat<T> A, Mat<T> B, bool pinned = true) {
   // Transfer the matrix matrix multiplacation of Eigen to GPU, using
   // CUBLas
 
