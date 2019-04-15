@@ -10,7 +10,7 @@ template <typename T> void benchmark(Mat<T> A, Mat<T> B, bool pinned = false) {
   std::chrono::time_point<std::chrono::system_clock> start, end;
 
   start = std::chrono::system_clock::now();
-  Mat<T> C = eigencuda::cublas_gemm(A, B);
+  Mat<T> C = eigencuda::cublas_gemm(A, B, pinned);
 
   // outputs
   end = std::chrono::system_clock::now();
@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
 
   std::cout << "size: " << size << "\n";
   std::cout << "Pageable Data Transfer\n";
-  benchmark<float>(A, B);
+  benchmark<float>(A, B, false);
   std::cout << "Pinned Data Transfer\n";
   benchmark<float>(A, B, true);
 
