@@ -3,7 +3,6 @@
 
 #include <Eigen/Core>
 #include <Eigen/Dense>
-#include <cstdlib>
 #include <cublas_v2.h>
 #include <curand.h>
 
@@ -24,7 +23,7 @@ template <typename T>
 using Mat = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
 
 template <typename T>
-Mat<T> cublas_gemm(Mat<T> A, Mat<T> B, bool pinned = true) {
+Mat<T> cublas_gemm(Mat<T> A, Mat<T> B, bool pinned = false) {
   // Transfer the matrix matrix multiplacation of Eigen to GPU, using
   // CUBLas
 
