@@ -93,6 +93,6 @@ Mat<T> cublas_gemm(Mat<T> A, Mat<T> B, bool pinned = false) {
   return C;
 }
 
-}
+} // namespace eigencuda
 
-#endif  // EIGENCUDA_H_
+#endif // EIGENCUDA_H_

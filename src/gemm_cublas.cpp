@@ -1,7 +1,7 @@
+#include "eigencuda.hpp"
 #include <chrono>
 #include <cxxopts.hpp>
 #include <iostream>
-#include "eigencuda.hpp"
 
 using eigencuda::Mat;
 
