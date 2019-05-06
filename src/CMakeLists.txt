@@ -1,5 +1,5 @@
 # headers
-include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(${PROJECT_SOURCE_DIR}/include ${CUDA_INCLUDE_DIRS})
 
 add_executable(gemm_cublas gemm_cublas.cpp)
 
