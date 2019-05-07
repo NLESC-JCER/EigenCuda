@@ -93,8 +93,7 @@ Mat<T> cublas_gemm(Mat<T> A, Mat<T> B, bool pinned = false) {
 }
 
 template <typename T>
-Mat<T> triple_product(Mat<T> A, Mat<T> B, Mat<T> C,
-                    bool pinned = false) {
+Mat<T> triple_product(Mat<T> A, Mat<T> B, Mat<T> C, bool pinned = false) {
   // Perform the triple matrix Multiplication: A^T * B * C
 
   // Transfer the matrix matrix multiplacation of Eigen to GPU, using
@@ -147,21 +146,20 @@ Mat<T> triple_product(Mat<T> A, Mat<T> B, Mat<T> C,
 
   // multiplied in the GPU
   if constexpr (std::is_same<float, T>()) {
-  // X = B * C
-  cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, B.rows(), C.cols(), B.cols(),
-              pa, dB, B.rows(), dC, C.rows(), pb, dX, X.rows());
-  // R = A^T * X
-  cublasSgemm(handle, CUBLAS_OP_T, CUBLAS_OP_N, A.cols(), X.cols(), A.rows(),
-              pa, dA, A.rows(), dX, X.rows(), pb, dY, Y.rows());
-    } else if (std::is_same<double, T>()) {
+    // X = B * C
+    cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, B.rows(), C.cols(), B.cols(),
+                pa, dB, B.rows(), dC, C.rows(), pb, dX, X.rows());
+    // R = A^T * X
+    cublasSgemm(handle, CUBLAS_OP_T, CUBLAS_OP_N, A.cols(), X.cols(), A.rows(),
+                pa, dA, A.rows(), dX, X.rows(), pb, dY, Y.rows());
+  } else if (std::is_same<double, T>()) {
     // X = B * C
     cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, B.rows(), C.cols(), B.cols(),
-		pa, dB, B.rows(), dC, C.rows(), pb, dX, X.rows());
+                pa, dB, B.rows(), dC, C.rows(), pb, dX, X.rows());
     // R = A^T * X
     cublasDgemm(handle, CUBLAS_OP_T, CUBLAS_OP_N, A.cols(), X.cols(), A.rows(),
-		pa, dA, A.rows(), dX, X.rows(), pb, dY, Y.rows());
-
-}
+                pa, dA, A.rows(), dX, X.rows(), pb, dY, Y.rows());
+  }
   // send data back to CPU
   cudaMemcpy(hY, dY, size_Y, cudaMemcpyDeviceToHost);
 
@@ -171,9 +169,7 @@ Mat<T> triple_product(Mat<T> A, Mat<T> B, Mat<T> C,
   // free memory
   cublasDestroy(handle);
 
-  auto fun_free = [&pinned](T *x) {
-    (pinned) ? cudaFreeHost(x) : cudaFree(x);
-  };
+  auto fun_free = [&pinned](T *x) { (pinned) ? cudaFreeHost(x) : cudaFree(x); };
 
   fun_free(dA);
   fun_free(dB);
