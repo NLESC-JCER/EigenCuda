@@ -26,11 +26,8 @@ using Mat = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
 template <typename T> class EigenCuda {
 
 public:
-  EigenCuda() {
-    cublasHandle_t _handle;
-    cublasCreate(&_handle);
-  }
-  EigenCuda(bool pinned) : _pinned{pinned} { EigenCuda(); }
+  EigenCuda();
+  EigenCuda(bool pinned);
 
   // Deallocate both the handler and allocated arrays
   ~EigenCuda();
@@ -39,12 +36,6 @@ public:
   EigenCuda(const EigenCuda &) = delete;
   EigenCuda &operator=(const EigenCuda &) = delete;
 
-  // // Allow only move operations
-  // EigenCuda (EigenCuda&& other): _handle{other._handle} {};
-  // EigenCuda& operator= (EigenCuda&&) {
-  //   _handle = other._handle;
-  //   return *this;
-  // }
 
   void fun_alloc(T **x, std::size_t n) {
     // Allocate memory in the device

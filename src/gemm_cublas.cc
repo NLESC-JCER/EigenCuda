@@ -11,6 +11,7 @@ void benchmark(Mat<T> A, Mat<T> B, Mat<T> C, bool pinned = false) {
   std::chrono::time_point<std::chrono::system_clock> start, end;
 
   start = std::chrono::system_clock::now();
+  eigencuda::EigenCuda<T> EC;
   // Mat<T> R = eigencuda::cublas_gemm(A, B, C, pinned);
   Mat<T> R = eigencuda::triple_product(A, B, C, pinned);
 

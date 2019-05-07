@@ -2,12 +2,18 @@
 
 namespace eigencuda {
 
+  template <typename T>::EigenCuda() {cublasCreate(&_handle);}
+  template <typename T>::EigenCuda(bool pinned) : _pinned{pinned} {
+    cublasCreate(&_handle); }
+
+
 template <typename T> EigenCuda<T>::~EigenCuda() {
   cublasDestroy(_handle);
   std::for_each(begin(_allocated), end(_allocated),
                 [this](T *x) { this->fun_free(x); });
 }
 
+template <typename T>
 void EigenCuda<T>::initialize_Matrices(Mat<T> &A, Mat<T> &B) {
   // Copy two matrices to the device
 
@@ -35,7 +41,8 @@ void EigenCuda<T>::initialize_Matrices(Mat<T> &A, Mat<T> &B) {
   cudaMemcpy(dB, hB, size_B, cudaMemcpyHostToDevice);
 }
 
-void gemm(Mat<T> &A, Mat<T> &B, Mat<T> &C, cublasOperation_t op1 = CUBLAS_OP_N,
+template <typename T>
+void EigenCuda<T>::gemm(Mat<T> &A, Mat<T> &B, Mat<T> &C, cublasOperation_t op1 = CUBLAS_OP_N,
           cublasOperation_t op2 = CUBLAS_OP_N) {
   // call gemm from cublas
   if constexpr (std::is_same<float, T>()) {
@@ -47,7 +54,8 @@ void gemm(Mat<T> &A, Mat<T> &B, Mat<T> &C, cublasOperation_t op1 = CUBLAS_OP_N,
   }
 }
 
-Mat<T> dot(Mat<T> A, Mat<T> B) {
+template <typename T>
+Mat<T> EigenCuda<T>::dot(Mat<T> A, Mat<T> B) {
   // Matrix multiplication
 
   // size of the resulting matrix
@@ -57,6 +65,7 @@ Mat<T> dot(Mat<T> A, Mat<T> B) {
 
   // allocate space in the device
   fun_alloc(&dC, size_C);
+  _allocated.emplace_back(dC);
 
   // process on GPU
   gemm(A, B, C);
