@@ -1,20 +1,20 @@
 # headers
 include_directories(${PROJECT_SOURCE_DIR}/include ${CUDA_INCLUDE_DIRS})
 
-add_executable(gemm_cublas gemm_cublas.cpp)
+add_executable(eigen_cuda gemm_cublas.cc)
 
-set_target_properties(gemm_cublas
+set_target_properties(eigen_cuda
   PROPERTIES
   CXX_STANDARD 14
   CXX_STANDARD_REQUIRED ON
   )
 
-target_compile_options(gemm_cublas
+target_compile_options(eigen_cuda
   PRIVATE
   "-Wall"
 )
 
-target_link_libraries(gemm_cublas
+target_link_libraries(eigen_cuda
   PRIVATE
     Eigen3::Eigen
     cxxopts::cxxopts

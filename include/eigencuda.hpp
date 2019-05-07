@@ -5,6 +5,7 @@
 #include <Eigen/Dense>
 #include <cublas_v2.h>
 #include <curand.h>
+#include <deque>
 
 namespace eigencuda {
 
@@ -22,8 +23,66 @@ inline cudaError_t checkCuda(cudaError_t result) {
 template <typename T>
 using Mat = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
 
+
+template < typename T>
+class EigenCuda {
+
+public:
+  EigenCuda() {
+  cublasHandle_t _handle;
+  cublasCreate(&_handle);
+}
+  EigenCuda(bool pinned): _pinned{pinned} {EigenCuda();}
+
+  // Deallocate both the handler and allocated arrays
+  ~EigenCuda();
+
+  // Remove the copy operations
+  EigenCuda (const EigenCuda&) =delete;
+  EigenCuda& operator= (const EigenCuda&) =delete;
+
+  // // Allow only move operations
+  // EigenCuda (EigenCuda&& other): _handle{other._handle} {}; 
+  // EigenCuda& operator= (EigenCuda&&) {
+  //   _handle = other._handle;
+  //   return *this;
+  // }
+
+  void fun_alloc(T **x, std::size_t n) {
+    // Allocate memory in the device
+    (_pinned) ? cudaMallocHost(x, n) : cudaMalloc(x, n);
+}
+
+  void fun_free (T *x) { 
+    // Deallocate memory from the device
+    (_pinned) ? cudaFreeHost(x) : cudaFree(x); };
+
+  //Copy two matrices to the device
+  void initialize_Matrices(Mat<T> A, Mat<T> B);
+
+  // Invoke the ?gemm function of cublas
+  Mat<T> gemm(Mat<T> A, Mat<T> B, Mat<T> C);
+
+  // Matrix multiplication
+  Mat<T> dot(Mat<T> A, Mat<T> B);
+
+
+private:
+  cublasHandle_t _handle;
+  bool _pinned = false;
+  std::deque<T*> _allocated;
+
+  // Scalar constanst for calling blas
+  T _alpha = 1.;
+  T _beta = 0.;
+  const T *_pa = &_alpha;
+  const T *_pb = &_beta;
+  
+};
+
+
 template <typename T>
-Mat<T> cublas_gemm(Mat<T> A, Mat<T> B, bool pinned = false) {
+Mat<T> cublas_gemm(Mat<T> &A, Mat<T> &B, bool pinned = false) {
   // Transfer the matrix matrix multiplacation of Eigen to GPU, using
   // CUBLas
 
@@ -93,7 +152,7 @@ Mat<T> cublas_gemm(Mat<T> A, Mat<T> B, bool pinned = false) {
 }
 
 template <typename T>
-Mat<T> triple_product(Mat<T> A, Mat<T> B, Mat<T> C, bool pinned = false) {
+Mat<T> triple_product(Mat<T> &A, Mat<T> &B, Mat<T> &C, bool pinned = false) {
   // Perform the triple matrix Multiplication: A^T * B * C
 
   // Transfer the matrix matrix multiplacation of Eigen to GPU, using
