@@ -125,7 +125,7 @@ Mat<T> triple_product(Mat<T> A, Mat<T> B, Mat<T> C, bool pinned = false) {
   T *dA, *dB, *dC, *dX, *dY;
 
   // Allocate either pageable or pinned memory
-  auto fun_alloc = [&pinned](float **x, std::size_t n) {
+  auto fun_alloc = [&pinned](T **x, std::size_t n) {
     (pinned) ? cudaMallocHost(x, n) : cudaMalloc(x, n);
   };
 
