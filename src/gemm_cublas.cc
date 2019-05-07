@@ -5,14 +5,14 @@
 
 using eigencuda::Mat;
 
-template <typename T> void benchmark(Mat<T> A, Mat<T> B, Mat<T> C, bool pinned = false) {
+template <typename T>
+void benchmark(Mat<T> A, Mat<T> B, Mat<T> C, bool pinned = false) {
   // chrono
   std::chrono::time_point<std::chrono::system_clock> start, end;
 
   start = std::chrono::system_clock::now();
   // Mat<T> R = eigencuda::cublas_gemm(A, B, C, pinned);
   Mat<T> R = eigencuda::triple_product(A, B, C, pinned);
-
 
   // outputs
   end = std::chrono::system_clock::now();

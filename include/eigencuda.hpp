@@ -23,26 +23,24 @@ inline cudaError_t checkCuda(cudaError_t result) {
 template <typename T>
 using Mat = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
 
-
-template < typename T>
-class EigenCuda {
+template <typename T> class EigenCuda {
 
 public:
   EigenCuda() {
-  cublasHandle_t _handle;
-  cublasCreate(&_handle);
-}
-  EigenCuda(bool pinned): _pinned{pinned} {EigenCuda();}
+    cublasHandle_t _handle;
+    cublasCreate(&_handle);
+  }
+  EigenCuda(bool pinned) : _pinned{pinned} { EigenCuda(); }
 
   // Deallocate both the handler and allocated arrays
   ~EigenCuda();
 
   // Remove the copy operations
-  EigenCuda (const EigenCuda&) =delete;
-  EigenCuda& operator= (const EigenCuda&) =delete;
+  EigenCuda(const EigenCuda &) = delete;
+  EigenCuda &operator=(const EigenCuda &) = delete;
 
   // // Allow only move operations
-  // EigenCuda (EigenCuda&& other): _handle{other._handle} {}; 
+  // EigenCuda (EigenCuda&& other): _handle{other._handle} {};
   // EigenCuda& operator= (EigenCuda&&) {
   //   _handle = other._handle;
   //   return *this;
@@ -51,13 +49,14 @@ public:
   void fun_alloc(T **x, std::size_t n) {
     // Allocate memory in the device
     (_pinned) ? cudaMallocHost(x, n) : cudaMalloc(x, n);
-}
+  }
 
-  void fun_free (T *x) { 
+  void fun_free(T *x) {
     // Deallocate memory from the device
-    (_pinned) ? cudaFreeHost(x) : cudaFree(x); };
+    (_pinned) ? cudaFreeHost(x) : cudaFree(x);
+  };
 
-  //Copy two matrices to the device
+  // Copy two matrices to the device
   void initialize_Matrices(Mat<T> A, Mat<T> B);
 
   // Invoke the ?gemm function of cublas
@@ -66,20 +65,17 @@ public:
   // Matrix multiplication
   Mat<T> dot(Mat<T> A, Mat<T> B);
 
-
 private:
   cublasHandle_t _handle;
   bool _pinned = false;
-  std::deque<T*> _allocated;
+  std::deque<T *> _allocated;
 
   // Scalar constanst for calling blas
   T _alpha = 1.;
   T _beta = 0.;
   const T *_pa = &_alpha;
   const T *_pb = &_beta;
-  
 };
-
 
 template <typename T>
 Mat<T> cublas_gemm(Mat<T> &A, Mat<T> &B, bool pinned = false) {
