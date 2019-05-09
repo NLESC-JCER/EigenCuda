@@ -7,6 +7,7 @@
 #include <curand.h>
 #include <tuple>
 #include <unordered_map>
+#include <vector>
 
 namespace eigencuda {
 
@@ -37,6 +38,13 @@ public:
   EigenCuda(const EigenCuda &) = delete;
   EigenCuda &operator=(const EigenCuda &) = delete;
 
+  // Matrix matrix multiplication
+  Mat<T> dot(Mat<T> &A, Mat<T> &B);
+
+  // Triple product with tensor
+  std::vector<Mat<T>> triple_tensor_product(Mat<T> &A, Mat<T> &B, std::vector<Mat<T>> &tensor);
+
+private:
   // Allocate memory in the device
   void fun_alloc(T **x, std::size_t n) const;
 
@@ -46,13 +54,12 @@ public:
   // Copy two matrices to the device
   unsigned initialize_Matrix(Mat<T> &A, bool copy_to_device = true);
 
-  Mat<T> dot(Mat<T> &A, Mat<T> &B);
-
-private:
   // Invoke the ?gemm function of cublas
   Mat<T> gemm(std::tuple<Mat<T> &, Mat<T> &, Mat<T> &> matrices,
               std::tuple<unsigned, unsigned, unsigned> ids);
-  // Matrix multiplication
+  
+  // Deallocate certain matrix from the device
+  void free_matrix(unsigned id);
 
   cublasHandle_t _handle;
   bool _pinned = false;

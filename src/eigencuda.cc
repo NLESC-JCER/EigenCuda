@@ -18,6 +18,12 @@ template <typename T> void EigenCuda<T>::fun_free(T *x) const {
   (_pinned) ? cudaFreeHost(x) : cudaFree(x);
 };
 
+template <typename T> void EigenCuda<T>::free_matrix(unsigned id) { 
+  // Free Array with id from the device
+  fun_free(_allocated.at(id));
+  _allocated.erase(id);
+}
+
 template <typename T>
 unsigned EigenCuda<T>::initialize_Matrix(Mat<T> &A, bool copy_to_device) {
   // Copy two matrices to the device
@@ -92,11 +98,25 @@ template <typename T> Mat<T> EigenCuda<T>::dot(Mat<T> &A, Mat<T> &B) {
   T *dC = _allocated[std::get<2>(ids)];
   cudaMemcpy(hC, dC, size_C, cudaMemcpyDeviceToHost);
 
+  // Free the result from the device
+  unsigned id_C = std::get<2>(ids);
+  free_matrix(id_C);
+
   // create an eigen matrix
   C = Eigen::Map<Mat<T>>(hC, A.rows(), B.cols());
 
   return C;
 }
+
+template <typename T> std::vector<Mat<T>> 
+triple_tensor_product(Mat<T> &A, Mat<T> &B, std::vector<Mat<T>> &tensor) {
+  // Perform the triple matrix multiplication A^T * matrix * B, for a vector
+  // of matrices given by tensor
+  std::vector<Mat<T>> rs(tensor.size());
+  
+  return rs;
+}
+
 
 // explicit instantiations
 template class EigenCuda<float>;
