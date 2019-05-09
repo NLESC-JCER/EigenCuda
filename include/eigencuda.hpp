@@ -41,8 +41,10 @@ public:
   // Matrix matrix multiplication
   Mat<T> dot(Mat<T> &A, Mat<T> &B);
 
-  // Triple product with tensor
-  std::vector<Mat<T>> triple_tensor_product(Mat<T> &A, Mat<T> &B, std::vector<Mat<T>> &tensor);
+  // Perform the triple matrix multiplication A^T * matrix * B, for the vector
+  // of matrices given by tensor
+  std::vector<Mat<T>> triple_tensor_product(Mat<T> &A, Mat<T> &B,
+                                            std::vector<Mat<T>> &tensor);
 
 private:
   // Allocate memory in the device
@@ -57,7 +59,7 @@ private:
   // Invoke the ?gemm function of cublas
   Mat<T> gemm(std::tuple<Mat<T> &, Mat<T> &, Mat<T> &> matrices,
               std::tuple<unsigned, unsigned, unsigned> ids);
-  
+
   // Deallocate certain matrix from the device
   void free_matrix(unsigned id);
 

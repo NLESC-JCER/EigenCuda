@@ -18,7 +18,7 @@ template <typename T> void EigenCuda<T>::fun_free(T *x) const {
   (_pinned) ? cudaFreeHost(x) : cudaFree(x);
 };
 
-template <typename T> void EigenCuda<T>::free_matrix(unsigned id) { 
+template <typename T> void EigenCuda<T>::free_matrix(unsigned id) {
   // Free Array with id from the device
   fun_free(_allocated.at(id));
   _allocated.erase(id);
@@ -60,7 +60,7 @@ Mat<T> EigenCuda<T>::gemm(std::tuple<Mat<T> &, Mat<T> &, Mat<T> &> matrices,
   unsigned id_A, id_B, id_C;
   std::tie(A, B, C) = matrices;
   std::tie(id_A, id_B, id_C) = ids;
-  
+
   // Pointer to the arrays in the device
   T *dA, *dB, *dC;
   dA = _allocated.at(id_A);
@@ -108,15 +108,15 @@ template <typename T> Mat<T> EigenCuda<T>::dot(Mat<T> &A, Mat<T> &B) {
   return C;
 }
 
-template <typename T> std::vector<Mat<T>> 
-triple_tensor_product(Mat<T> &A, Mat<T> &B, std::vector<Mat<T>> &tensor) {
-  // Perform the triple matrix multiplication A^T * matrix * B, for a vector
+template <typename T>
+std::vector<Mat<T>> triple_tensor_product(Mat<T> &A, Mat<T> &B,
+                                          std::vector<Mat<T>> &tensor) {
+  // Perform the triple matrix multiplication A^T * matrix * B, for the vector
   // of matrices given by tensor
-  std::vector<Mat<T>> rs(tensor.size());
-  
+   std::vector<Mat<T>> rs(tensor.size());
+
   return rs;
 }
-
 
 // explicit instantiations
 template class EigenCuda<float>;
