@@ -1,7 +1,7 @@
 # headers
 include_directories(${PROJECT_SOURCE_DIR}/include ${CUDA_INCLUDE_DIRS})
 
-add_executable(eigen_cuda gemm_cublas.cc)
+add_executable(eigen_cuda gemm_cublas.cc eigencuda.cc)
 
 set_target_properties(eigen_cuda
   PROPERTIES

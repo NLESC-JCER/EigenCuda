@@ -5,7 +5,8 @@
 #include <Eigen/Dense>
 #include <cublas_v2.h>
 #include <curand.h>
-#include <deque>
+#include <tuple>
+#include <unordered_map>
 
 namespace eigencuda {
 
@@ -26,8 +27,10 @@ using Mat = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
 template <typename T> class EigenCuda {
 
 public:
-  EigenCuda();
-  EigenCuda(bool pinned);
+  EigenCuda() { cublasCreate(&_handle); }
+  EigenCuda(bool pinned) : _pinned{pinned} {
+    cublasCreate(&_handle);
+}
 
   // Deallocate both the handler and allocated arrays
   ~EigenCuda();
@@ -36,29 +39,27 @@ public:
   EigenCuda(const EigenCuda &) = delete;
   EigenCuda &operator=(const EigenCuda &) = delete;
 
-  void fun_alloc(T **x, std::size_t n) {
-    // Allocate memory in the device
-    (_pinned) ? cudaMallocHost(x, n) : cudaMalloc(x, n);
-  }
+  // Allocate memory in the device
+  void fun_alloc(T **x, std::size_t n) const;
 
-  void fun_free(T *x) {
-    // Deallocate memory from the device
-    (_pinned) ? cudaFreeHost(x) : cudaFree(x);
-  };
+  // Deallocate memory from the device
+  void fun_free(T *x) const;
 
   // Copy two matrices to the device
-  void initialize_Matrices(Mat<T> A, Mat<T> B);
+  unsigned initialize_Matrix(Mat<T> &A, bool copy_to_device = true);
 
-  // Invoke the ?gemm function of cublas
-  Mat<T> gemm(Mat<T> A, Mat<T> B, Mat<T> C);
-
-  // Matrix multiplication
-  Mat<T> dot(Mat<T> A, Mat<T> B);
+  Mat<T> dot(Mat<T> &A, Mat<T> &B);
 
 private:
+  // Invoke the ?gemm function of cublas
+  Mat<T> gemm(std::tuple<Mat<T>&, Mat<T>&, Mat<T>&> matrices,
+	      std::tuple<unsigned, unsigned, unsigned> ids);
+  // Matrix multiplication
+
   cublasHandle_t _handle;
   bool _pinned = false;
-  std::deque<T *> _allocated;
+  unsigned _counter = 0;
+  std::unordered_map<unsigned, T *> _allocated;
 
   // Scalar constanst for calling blas
   T _alpha = 1.;
