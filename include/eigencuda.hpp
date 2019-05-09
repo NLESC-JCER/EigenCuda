@@ -36,7 +36,6 @@ public:
   EigenCuda(const EigenCuda &) = delete;
   EigenCuda &operator=(const EigenCuda &) = delete;
 
-
   void fun_alloc(T **x, std::size_t n) {
     // Allocate memory in the device
     (_pinned) ? cudaMallocHost(x, n) : cudaMalloc(x, n);

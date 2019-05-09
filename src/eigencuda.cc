@@ -2,10 +2,10 @@
 
 namespace eigencuda {
 
-  template <typename T>::EigenCuda() {cublasCreate(&_handle);}
-  template <typename T>::EigenCuda(bool pinned) : _pinned{pinned} {
-    cublasCreate(&_handle); }
-
+template <typename T>::EigenCuda() { cublasCreate(&_handle); }
+template <typename T>::EigenCuda(bool pinned) : _pinned{pinned} {
+  cublasCreate(&_handle);
+}
 
 template <typename T> EigenCuda<T>::~EigenCuda() {
   cublasDestroy(_handle);
@@ -42,8 +42,9 @@ void EigenCuda<T>::initialize_Matrices(Mat<T> &A, Mat<T> &B) {
 }
 
 template <typename T>
-void EigenCuda<T>::gemm(Mat<T> &A, Mat<T> &B, Mat<T> &C, cublasOperation_t op1 = CUBLAS_OP_N,
-          cublasOperation_t op2 = CUBLAS_OP_N) {
+void EigenCuda<T>::gemm(Mat<T> &A, Mat<T> &B, Mat<T> &C,
+                        cublasOperation_t op1 = CUBLAS_OP_N,
+                        cublasOperation_t op2 = CUBLAS_OP_N) {
   // call gemm from cublas
   if constexpr (std::is_same<float, T>()) {
     cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, A.rows(), B.cols(), A.cols(),
@@ -54,8 +55,7 @@ void EigenCuda<T>::gemm(Mat<T> &A, Mat<T> &B, Mat<T> &C, cublasOperation_t op1 =
   }
 }
 
-template <typename T>
-Mat<T> EigenCuda<T>::dot(Mat<T> A, Mat<T> B) {
+template <typename T> Mat<T> EigenCuda<T>::dot(Mat<T> A, Mat<T> B) {
   // Matrix multiplication
 
   // size of the resulting matrix
