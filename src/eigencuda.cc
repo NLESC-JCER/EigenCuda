@@ -4,18 +4,16 @@ namespace eigencuda {
 
 template <typename T> EigenCuda<T>::~EigenCuda() {
   cublasDestroy(_handle);
-  for (auto &p: _allocated)
-    this -> fun_free(p.second);
+  for (auto &p : _allocated)
+    this->fun_free(p.second);
 }
 
-template <typename T>
-void EigenCuda<T>::fun_alloc(T **x, std::size_t n) const {
+template <typename T> void EigenCuda<T>::fun_alloc(T **x, std::size_t n) const {
   // Allocate memory in the device
   (_pinned) ? cudaMallocHost(x, n) : cudaMalloc(x, n);
 }
 
-template <typename T>
-void EigenCuda<T>::fun_free(T *x) const {
+template <typename T> void EigenCuda<T>::fun_free(T *x) const {
   // Deallocate memory from the device
   (_pinned) ? cudaFreeHost(x) : cudaFree(x);
 };
@@ -49,8 +47,8 @@ unsigned EigenCuda<T>::initialize_Matrix(Mat<T> &A, bool copy_to_device) {
 }
 
 template <typename T>
-Mat<T> EigenCuda<T>::gemm(std::tuple<Mat<T>&, Mat<T>&, Mat<T>&> matrices,
-			  std::tuple<unsigned, unsigned, unsigned> ids) {
+Mat<T> EigenCuda<T>::gemm(std::tuple<Mat<T> &, Mat<T> &, Mat<T> &> matrices,
+                          std::tuple<unsigned, unsigned, unsigned> ids) {
   // Invoke the gemm subroutine from cublas
   Mat<T> A, B, C;
   unsigned id_A, id_B, id_C;
@@ -64,9 +62,9 @@ Mat<T> EigenCuda<T>::gemm(std::tuple<Mat<T>&, Mat<T>&, Mat<T>&> matrices,
 
   // call gemm from cublas
   if constexpr (std::is_same<float, T>()) {
-      cublasSgemm(_handle, CUBLAS_OP_N, CUBLAS_OP_N, A.rows(), B.cols(), A.cols(),
-		  _pa, dA, A.rows(), dB, B.rows(), _pb, dC, C.rows());
-    } else if (std::is_same<double, T>()) {
+    cublasSgemm(_handle, CUBLAS_OP_N, CUBLAS_OP_N, A.rows(), B.cols(), A.cols(),
+                _pa, dA, A.rows(), dB, B.rows(), _pb, dC, C.rows());
+  } else if (std::is_same<double, T>()) {
     cublasDgemm(_handle, CUBLAS_OP_N, CUBLAS_OP_N, A.rows(), B.cols(), A.cols(),
                 _pa, dA, A.rows(), dB, B.rows(), _pb, dC, C.rows());
   }
@@ -75,20 +73,18 @@ Mat<T> EigenCuda<T>::gemm(std::tuple<Mat<T>&, Mat<T>&, Mat<T>&> matrices,
 
 template <typename T> Mat<T> EigenCuda<T>::dot(Mat<T> &A, Mat<T> &B) {
   // Matrix multiplication
- 
+
   // Matrix to store the result
   Mat<T> C = Mat<T>::Zero(A.rows(), B.cols());
   std::size_t size_C = C.rows() * C.cols() * sizeof(T);
 
   // Id of the Arrays to compute the multiplication
-  std::tuple<unsigned, unsigned, unsigned> ids = 
-    std::make_tuple(initialize_Matrix(A),
-		    initialize_Matrix(B),
-		    initialize_Matrix(C, false)
-		    );
+  std::tuple<unsigned, unsigned, unsigned> ids = std::make_tuple(
+      initialize_Matrix(A), initialize_Matrix(B), initialize_Matrix(C, false));
 
   // process on GPU
-  std::tuple< Mat<T>&, Mat<T>&, Mat<T>& > matrices = std::forward_as_tuple(A, B, C);
+  std::tuple<Mat<T> &, Mat<T> &, Mat<T> &> matrices =
+      std::forward_as_tuple(A, B, C);
   gemm(matrices, ids);
 
   // send data back to CPU

@@ -28,9 +28,7 @@ template <typename T> class EigenCuda {
 
 public:
   EigenCuda() { cublasCreate(&_handle); }
-  EigenCuda(bool pinned) : _pinned{pinned} {
-    cublasCreate(&_handle);
-}
+  EigenCuda(bool pinned) : _pinned{pinned} { cublasCreate(&_handle); }
 
   // Deallocate both the handler and allocated arrays
   ~EigenCuda();
@@ -52,8 +50,8 @@ public:
 
 private:
   // Invoke the ?gemm function of cublas
-  Mat<T> gemm(std::tuple<Mat<T>&, Mat<T>&, Mat<T>&> matrices,
-	      std::tuple<unsigned, unsigned, unsigned> ids);
+  Mat<T> gemm(std::tuple<Mat<T> &, Mat<T> &, Mat<T> &> matrices,
+              std::tuple<unsigned, unsigned, unsigned> ids);
   // Matrix multiplication
 
   cublasHandle_t _handle;
