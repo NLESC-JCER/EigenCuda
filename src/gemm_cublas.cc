@@ -13,7 +13,8 @@ void benchmark(Mat<T> A, Mat<T> B, Mat<T> C, bool pinned = false) {
   start = std::chrono::system_clock::now();
   eigencuda::EigenCuda<T> EC;
   // Mat<T> R = eigencuda::cublas_gemm(A, B, C, pinned);
-  Mat<T> R = eigencuda::triple_product(A, B, C, pinned);
+  // Mat<T> R = eigencuda::triple_product(A, B, C, pinned);
+  Mat<T> R = EC.dot(A, B);
 
   // outputs
   end = std::chrono::system_clock::now();
@@ -33,7 +34,7 @@ int main(int argc, char *argv[]) {
   int size = result["size"].as<int>();
 
   // Create CPU matrices
-  Mat<float> A = Mat<float>::Random(size, size + 10);
+  Mat<float> A = Mat<float>::Random(size, size);
   Mat<float> B = Mat<float>::Random(size, size + 20);
   Mat<float> C = Mat<float>::Random(size + 20, size);
 

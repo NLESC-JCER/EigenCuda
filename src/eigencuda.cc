@@ -54,11 +54,12 @@ Mat<T> EigenCuda<T>::gemm(std::tuple<Mat<T> &, Mat<T> &, Mat<T> &> matrices,
   unsigned id_A, id_B, id_C;
   std::tie(A, B, C) = matrices;
   std::tie(id_A, id_B, id_C) = ids;
-
+  
+  // Pointer to the arrays in the device
   T *dA, *dB, *dC;
-  dA = _allocated[id_A];
-  dB = _allocated[id_B];
-  dC = _allocated[id_C];
+  dA = _allocated.at(id_A);
+  dB = _allocated.at(id_B);
+  dC = _allocated.at(id_C);
 
   // call gemm from cublas
   if constexpr (std::is_same<float, T>()) {
@@ -78,7 +79,6 @@ template <typename T> Mat<T> EigenCuda<T>::dot(Mat<T> &A, Mat<T> &B) {
   Mat<T> C = Mat<T>::Zero(A.rows(), B.cols());
   std::size_t size_C = C.rows() * C.cols() * sizeof(T);
 
-  // Id of the Arrays to compute the multiplication
   std::tuple<unsigned, unsigned, unsigned> ids = std::make_tuple(
       initialize_Matrix(A), initialize_Matrix(B), initialize_Matrix(C, false));
 
