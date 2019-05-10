@@ -166,5 +166,5 @@ Mat<T> triple_product(Mat<T> &A, Mat<T> &B, Mat<T> &C, bool pinned = false) {
   return Y;
 }
 
-}
+} // namespace eigencuda
 #endif // EIGENMATMUL_H_

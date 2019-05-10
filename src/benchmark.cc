@@ -23,18 +23,19 @@ void benchmark(Mat<T> A, Mat<T> B, Mat<T> C, bool pinned) {
   std::cout << "Run time: " << elapsed_time.count() << " secs\n";
 }
 
-void run_benchmark(std::vector<int> vs, bool pinned = false){
-  for (auto size: vs) {
+void run_benchmark(std::vector<int> vs, bool pinned = false) {
+  for (auto size : vs) {
     // Create CPU matrices
     Mat<float> A = Mat<float>::Random(size, size);
     Mat<float> B = Mat<float>::Random(size, size + 20);
     Mat<float> C = Mat<float>::Random(size + 20, size);
-    
-    std::string msg = (pinned) ? "Pinned Data Transfer" : "Pageable Data Transfer";
+
+    std::string msg =
+        (pinned) ? "Pinned Data Transfer" : "Pageable Data Transfer";
     std::cout << "size: " << size << "\n";
     std::cout << msg << "\n";
     benchmark<float>(A, B, C, pinned);
-}
+  }
 }
 
 int main(int argc, char *argv[]) {
@@ -49,7 +50,7 @@ int main(int argc, char *argv[]) {
   bool pinned = result["pinned"].as<bool>();
 
   std::vector<int> vs{100, 200, 500, 1000, 1500, 2000};
- 
+
   run_benchmark(vs, pinned);
   return 0;
 }
