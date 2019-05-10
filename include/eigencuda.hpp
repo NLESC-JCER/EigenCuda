@@ -1,9 +1,9 @@
 #ifndef EIGENCUDA_H_
 #define EIGENCUDA_H_
 
-#include <algorithm>
 #include <Eigen/Core>
 #include <Eigen/Dense>
+#include <algorithm>
 #include <cublas_v2.h>
 #include <curand.h>
 #include <tuple>

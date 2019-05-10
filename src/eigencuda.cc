@@ -69,7 +69,7 @@ Mat<T> EigenCuda<T>::gemm(std::tuple<Mat<T> &, Mat<T> &, Mat<T> &> matrices,
 
   // call gemm from cublas
   if constexpr (std::is_same<float, T>()) {
-      cublasSgemm(_handle, CUBLAS_OP_N, CUBLAS_OP_N, A.rows(), B.cols(), A.cols(),
+    cublasSgemm(_handle, CUBLAS_OP_N, CUBLAS_OP_N, A.rows(), B.cols(), A.cols(),
                 _pa, dA, A.rows(), dB, B.rows(), _pb, dC, C.rows());
   } else if (std::is_same<double, T>()) {
     cublasDgemm(_handle, CUBLAS_OP_N, CUBLAS_OP_N, A.rows(), B.cols(), A.cols(),
@@ -110,8 +110,9 @@ template <typename T> Mat<T> EigenCuda<T>::dot(Mat<T> &A, Mat<T> &B) {
 }
 
 template <typename T>
-std::vector<Mat<T>> EigenCuda<T>::triple_tensor_product(Mat<T> &A, Mat<T> &C,
-							std::vector<Mat<T>> &tensor) {
+std::vector<Mat<T>>
+EigenCuda<T>::triple_tensor_product(Mat<T> &A, Mat<T> &C,
+                                    std::vector<Mat<T>> &tensor) {
   // Perform the triple matrix multiplication A^T * matrix * C, for the vector
   // of matrices given by tensor
   std::vector<Mat<T>> rs(tensor.size());
@@ -122,7 +123,7 @@ std::vector<Mat<T>> EigenCuda<T>::triple_tensor_product(Mat<T> &A, Mat<T> &C,
   // Copy Matrix A and B to the device
   unsigned id_AT = initialize_Matrix(AT);
   unsigned id_C = initialize_Matrix(C);
-  
+
   // allocate space in device for the temporal matrices
   unsigned size_Y = AT.rows() * AT.cols() * sizeof(T);
   Mat<T> X = Mat<T>::Zero(AT.cols(), C.cols());
@@ -132,40 +133,42 @@ std::vector<Mat<T>> EigenCuda<T>::triple_tensor_product(Mat<T> &A, Mat<T> &C,
   unsigned id_X = initialize_Matrix(X, false);
   unsigned id_Y = initialize_Matrix(Y, false);
   unsigned id_matrix = initialize_Matrix(matrix, false);
-  
+
   // Iterate over the tensor
   transform(tensor.begin(), tensor.end(), rs.begin(),
-	    [this, id_AT, id_C, id_X, id_Y, id_matrix, size_Y, &AT, &C, &matrix, &X, &Y](Mat<T> &tmp){
-      
-      // Use the previous allocate space in the device
-      matrix = tmp;
+            [this, id_AT, id_C, id_X, id_Y, id_matrix, size_Y, &AT, &C, &matrix,
+             &X, &Y](Mat<T> &tmp) {
+              // Use the previous allocate space in the device
+              matrix = tmp;
 
-      // Reset temporal matrices to zero
-      X = Mat<T>::Zero(matrix.rows(), C.cols());
-      Y = Mat<T>::Zero(AT.rows(), C.cols());
-      
-      // Compute first matrix multiplication
-      std::tuple<unsigned, unsigned, unsigned> ids =  std::make_tuple(id_matrix, id_C, id_X);
-      std::tuple<Mat<T> &, Mat<T> &, Mat<T> &> matrices =
-	std::forward_as_tuple(matrix, C, X);
-      gemm(matrices, ids);
-      
-      // compute the second matrix multiplication
-      ids = std::make_tuple(id_AT, id_X, id_Y);
-      matrices = std::forward_as_tuple(AT, X, Y);
-      gemm(matrices, ids);
-      
-      // send data back to CPU
-      T *hY = Y.data();
-      T *dY = this -> _allocated[id_Y];
-      cudaMemcpy(hY, dY, size_Y, cudaMemcpyDeviceToHost);
-      Y = Eigen::Map<Mat<T>>(hY, AT.rows(), C.cols());      
-      
-      return Y;});
-  
+              // Reset temporal matrices to zero
+              X = Mat<T>::Zero(matrix.rows(), C.cols());
+              Y = Mat<T>::Zero(AT.rows(), C.cols());
+
+              // Compute first matrix multiplication
+              std::tuple<unsigned, unsigned, unsigned> ids =
+                  std::make_tuple(id_matrix, id_C, id_X);
+              std::tuple<Mat<T> &, Mat<T> &, Mat<T> &> matrices =
+                  std::forward_as_tuple(matrix, C, X);
+              gemm(matrices, ids);
+
+              // compute the second matrix multiplication
+              ids = std::make_tuple(id_AT, id_X, id_Y);
+              matrices = std::forward_as_tuple(AT, X, Y);
+              gemm(matrices, ids);
+
+              // send data back to CPU
+              T *hY = Y.data();
+              T *dY = this->_allocated[id_Y];
+              cudaMemcpy(hY, dY, size_Y, cudaMemcpyDeviceToHost);
+              Y = Eigen::Map<Mat<T>>(hY, AT.rows(), C.cols());
+
+              return Y;
+            });
+
   return rs;
 }
-  
+
 // explicit instantiations
 template class EigenCuda<float>;
 template class EigenCuda<double>;
