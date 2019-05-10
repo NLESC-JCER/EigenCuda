@@ -10,6 +10,11 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CXX_FLAGS)
     "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CXX_FLAGS)
 
+# User input options
+option(ENABLE_TESTING "Build and enable tests" OFF)
+if(ENABLE_TESTING)
+  enable_testing()
+endif(ENABLE_TESTING)
 
 # Set the output folder where your program will be created
 set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/bin)
@@ -28,6 +33,5 @@ find_package(cxxopts REQUIRED
 find_package (Eigen3 3.3 REQUIRED CONFIG
   HINTS ${CONDA_PREFIX}/include
 )
-message(STATUS "EIGEN Include: " ${EIGEN3_INCLUDE_DIR})
 
 add_subdirectory(src)
