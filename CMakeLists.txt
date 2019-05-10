@@ -14,6 +14,7 @@ endif(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CXX_FLAGS)
 option(ENABLE_TESTING "Build and enable tests" OFF)
 if(ENABLE_TESTING)
   enable_testing()
+  find_package(Boost REQUIRED COMPONENTS unit_test_framework)
 endif(ENABLE_TESTING)
 
 # Set the output folder where your program will be created
@@ -33,5 +34,7 @@ find_package(cxxopts REQUIRED
 find_package (Eigen3 3.3 REQUIRED CONFIG
   HINTS ${CONDA_PREFIX}/include
 )
+
+message(STATUS "EIGEN Include: " ${EIGEN3_INCLUDE_DIR})
 
 add_subdirectory(src)
