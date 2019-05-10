@@ -1,6 +1,7 @@
 #ifndef EIGENCUDA_H_
 #define EIGENCUDA_H_
 
+#include <algorithm>
 #include <Eigen/Core>
 #include <Eigen/Dense>
 #include <cublas_v2.h>
@@ -43,7 +44,7 @@ public:
 
   // Perform the triple matrix multiplication A^T * matrix * B, for the vector
   // of matrices given by tensor
-  std::vector<Mat<T>> triple_tensor_product(Mat<T> &A, Mat<T> &B,
+  std::vector<Mat<T>> triple_tensor_product(Mat<T> &A, Mat<T> &C,
                                             std::vector<Mat<T>> &tensor);
 
 private:
