@@ -1,13 +1,13 @@
 #define BOOST_TEST_MODULE eigen_cuda
 #include "eigencuda.hpp"
 #include <boost/test/included/unit_test.hpp>
-
+#include <vector>
 using eigencuda::Mat;
 
 BOOST_AUTO_TEST_CASE(triple_tensor_product) {
-  eigencuda::EigenCuda<float> EC;
-  Mat<float> A = Mat<float>::Zero(2, 2);
-  Mat<float> B = Mat<float>::Zero(2, 2);
+  eigencuda::EigenCuda<double> EC;
+  Mat<double> A = Mat<double>::Zero(2, 2);
+  Mat<double> B = Mat<double>::Zero(2, 2);
   Mat<double> C = Mat<double>::Zero(2, 2);
   Mat<double> D = Mat<double>::Zero(2, 2);
 
