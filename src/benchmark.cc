@@ -70,7 +70,8 @@ void triple_product() {
   assert(abs(rs[0].sum() - 2854.) < 1e-8);
   assert(abs(rs[1].sum() - 3894.) < 1e-8);
 
-  std::cout << "triple tensor product is done!" << "\n";
+  std::cout << "triple tensor product is done!"
+            << "\n";
 }
 
 int main(int argc, char *argv[]) {

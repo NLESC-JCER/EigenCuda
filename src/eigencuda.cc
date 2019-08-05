@@ -137,15 +137,15 @@ EigenCuda<T>::triple_tensor_product(Mat<T> &A, Mat<T> &C,
 
   // Iterate over the tensor Using the previous allocated space in the device
   transform(tensor.begin(), tensor.end(), rs.begin(),
-            [this, id_AT, id_C, id_X, id_Y, id_matrix, size_Y, &AT, &C,
-             &X, &Y](Mat<T> &mtx) {
-	      // Copy matrix to the device
-	      T *d_matrix = _allocated.at(id_matrix);
-	      T *h_mtx = mtx.data();
+            [this, id_AT, id_C, id_X, id_Y, id_matrix, size_Y, &AT, &C, &X,
+             &Y](Mat<T> &mtx) {
+              // Copy matrix to the device
+              T *d_matrix = _allocated.at(id_matrix);
+              T *h_mtx = mtx.data();
 
-	      // move temporal matrix to the preallocated space
-	      std::size_t size_mtx = mtx.rows() * mtx.cols() * sizeof(T);
-	      cudaMemcpy(d_matrix, h_mtx, size_mtx, cudaMemcpyHostToDevice);
+              // move temporal matrix to the preallocated space
+              std::size_t size_mtx = mtx.rows() * mtx.cols() * sizeof(T);
+              cudaMemcpy(d_matrix, h_mtx, size_mtx, cudaMemcpyHostToDevice);
 
               // Reset temporal matrices to zero
               X = Mat<T>::Zero(mtx.rows(), C.cols());
