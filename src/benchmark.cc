@@ -39,7 +39,7 @@ void run_benchmark(std::vector<int> vs, bool pinned = false) {
 }
 
 void dot_product() {
-  eigencuda::EigenC uda<float> EC;
+  eigencuda::EigenCuda<float> EC;
   Mat<float> A = Mat<float>::Zero(2, 2);
   Mat<float> B = Mat<float>::Zero(2, 2);
 
