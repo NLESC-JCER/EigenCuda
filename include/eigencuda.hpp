@@ -42,7 +42,7 @@ public:
   // Matrix matrix multiplication
   Mat<T> dot(Mat<T> &A, Mat<T> &B);
 
-  // Perform the triple matrix multiplication A^T * matrix * B, for the vector
+  // Perform the triple matrix multiplication A^T * matrix * C, for the vector
   // of matrices given by tensor
   std::vector<Mat<T>> triple_tensor_product(Mat<T> &A, Mat<T> &C,
                                             std::vector<Mat<T>> &tensor);
@@ -54,7 +54,7 @@ private:
   // Deallocate memory from the device
   void fun_free(T *x) const;
 
-  // Copy two matrices to the device
+  // Copy matricex to the device
   unsigned initialize_Matrix(Mat<T> &A, bool copy_to_device = true);
 
   // Invoke the ?gemm function of cublas

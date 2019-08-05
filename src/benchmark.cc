@@ -38,6 +38,18 @@ void run_benchmark(std::vector<int> vs, bool pinned = false) {
   }
 }
 
+void dot_product() {
+  eigencuda::EigenC uda<float> EC;
+  Mat<float> A = Mat<float>::Zero(2, 2);
+  Mat<float> B = Mat<float>::Zero(2, 2);
+
+  A << 1., 2., 3., 4.;
+  B << 5., 6., 7., 8.;
+
+  Mat<float> C = EC.dot(A, B);
+  std::cout << "dot product: " << C.sum() << "\n";
+}
+
 int main(int argc, char *argv[]) {
 
   // parse the input
@@ -52,5 +64,6 @@ int main(int argc, char *argv[]) {
   std::vector<int> vs{100, 200, 500, 1000, 1500, 2000};
 
   run_benchmark(vs, pinned);
+  dot_product();
   return 0;
 }
