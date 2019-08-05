@@ -1,4 +1,5 @@
 #include "eigencuda.hpp"
+#include <iostream>
 
 namespace eigencuda {
 
@@ -134,22 +135,27 @@ EigenCuda<T>::triple_tensor_product(Mat<T> &A, Mat<T> &C,
   unsigned id_Y = initialize_Matrix(Y, false);
   unsigned id_matrix = initialize_Matrix(matrix, false);
 
-  // Iterate over the tensor
+  // Iterate over the tensor Using the previous allocated space in the device
   transform(tensor.begin(), tensor.end(), rs.begin(),
-            [this, id_AT, id_C, id_X, id_Y, id_matrix, size_Y, &AT, &C, &matrix,
-             &X, &Y](Mat<T> &tmp) {
-              // Use the previous allocate space in the device
-              matrix = tmp;
+            [this, id_AT, id_C, id_X, id_Y, id_matrix, size_Y, &AT, &C,
+             &X, &Y](Mat<T> &mtx) {
+	      // Copy matrix to the device
+	      T *d_matrix = _allocated.at(id_matrix);
+	      T *h_mtx = mtx.data();
+
+	      // move temporal matrix to the preallocated space
+	      std::size_t size_mtx = mtx.rows() * mtx.cols() * sizeof(T);
+	      cudaMemcpy(d_matrix, h_mtx, size_mtx, cudaMemcpyHostToDevice);
 
               // Reset temporal matrices to zero
-              X = Mat<T>::Zero(matrix.rows(), C.cols());
+              X = Mat<T>::Zero(mtx.rows(), C.cols());
               Y = Mat<T>::Zero(AT.rows(), C.cols());
 
               // Compute first matrix multiplication
               std::tuple<unsigned, unsigned, unsigned> ids =
                   std::make_tuple(id_matrix, id_C, id_X);
               std::tuple<Mat<T> &, Mat<T> &, Mat<T> &> matrices =
-                  std::forward_as_tuple(matrix, C, X);
+                  std::forward_as_tuple(mtx, C, X);
               gemm(matrices, ids);
 
               // compute the second matrix multiplication
