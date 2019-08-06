@@ -96,33 +96,17 @@ void triple_product() {
   Mat<double> D = Mat<double>::Zero(3, 3);
 
   // Define matrices
-  // A << 1., 2., 3., 4., 5., 6., 7., 8., 9.;
-  // B << 5., 6., 7., 8., 9., 10., 11., 12., 13.;
   A << 1., 2., 3., 4., 5., 6.;
   B << 5., 6., 7., 8., 9., 10.;
   C << 9., 10., 11., 12., 13., 14., 15., 16., 17.;
   D << 13., 14., 15., 16., 17., 18., 19., 20., 21.;
-
+  
   std::vector<Mat<double>> tensor{C, D};
   std::vector<Mat<double>> rs = EC.triple_tensor_product(A, B, tensor);
 
-  for (const auto &x : rs) {
-    std::cout << "vector: " << x << "\n";
-    std::cout << "sum: " << x.sum() << "\n";
-  }
-
-  // auto size = 50;
-  // Mat<double> A = Mat<double>::Random(size, size);
-  // Mat<double> B = Mat<double>::Random(size+20, size);
-  // Mat<double> C = Mat<double>::Random(size + 20, size);
-  // Mat<double> D = Mat<double>::Random(size + 20, size);
-
-  // triple_product_benchmark(A, B, tensor);
-
-  // // Check results
-  // // assert(abs(rs[0].sum() - 2854.) < 1e-8);
-  // // assert(abs(rs[1].sum() - 3894.) < 1e-8);
-  // std::cout << "triplet product seems to be correct\n";
+  // Check results
+  assert(abs(rs[0].sum() - 12993.) < 1e-8);
+  assert(abs(rs[1].sum() - 16773.) < 1e-8);    
 }
 
 int main(int argc, char *argv[]) {
@@ -139,7 +123,7 @@ int main(int argc, char *argv[]) {
   std::vector<int> vs{100, 200, 500, 1000, 1500, 2000};
 
   // run_benchmark(vs, pinned);
-  // dot_product();
+  dot_product();
   triple_product();
   return 0;
 }

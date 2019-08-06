@@ -120,7 +120,7 @@ EigenCuda<T>::triple_tensor_product(Mat<T> &A, Mat<T> &C,
   unsigned id_C = initialize_Matrix(C);
 
   // allocate space in device for the temporal matrices
-  unsigned size_Y = A.rows() * A.cols() * sizeof(T);
+  unsigned size_Y = A.rows() * C.cols() * sizeof(T);
   Mat<T> X = Mat<T>::Zero(A.cols(), C.cols());
   Mat<T> Y = Mat<T>::Zero(A.rows(), C.cols());
   Mat<T> matrix = Mat<T>::Zero(A.cols(), C.rows());
