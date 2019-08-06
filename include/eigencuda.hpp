@@ -23,14 +23,14 @@ inline cudaError_t checkCuda(cudaError_t result) {
 }
 
 // Structure with the sizes to call ?GEMM
-  struct Shapes {
-    int A_rows;
-    int A_cols;
-    int B_rows;
-    int B_cols;
-    int C_rows;
-  };
-  
+struct Shapes {
+  int A_rows;
+  int A_cols;
+  int B_rows;
+  int B_cols;
+  int C_rows;
+};
+
 // col Major for CUDA
 template <typename T>
 using Mat = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;

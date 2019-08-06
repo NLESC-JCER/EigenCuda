@@ -25,28 +25,30 @@ void dot_benchmark(Mat<T> &A, Mat<T> &B, Mat<T> &C, bool pinned) {
 }
 
 template <typename T>
-void triple_product_benchmark(Mat<T> &A, Mat<T> &B, std::vector<Mat<T>> tensor) {
+void triple_product_benchmark(Mat<T> &A, Mat<T> &B,
+                              std::vector<Mat<T>> tensor) {
   // chrono
   std::chrono::time_point<std::chrono::system_clock> start, end;
 
   start = std::chrono::system_clock::now();
-    eigencuda::EigenCuda<double> EC;
+  eigencuda::EigenCuda<double> EC;
   std::vector<Mat<double>> rs = EC.triple_tensor_product(A, B, tensor);
   end = std::chrono::system_clock::now();
   std::chrono::duration<double> elapsed_time = end - start;
-  std::cout << "GPU triple tensor product: " << elapsed_time.count() << " secs\n";
-  
+  std::cout << "GPU triple tensor product: " << elapsed_time.count()
+            << " secs\n";
+
   // Call Eigen
   start = std::chrono::system_clock::now();
   std::vector<Mat<double>> qs;
-  for (const auto& x: tensor) {
+  for (const auto &x : tensor) {
     Mat<double> r = A * (x * B);
     qs.push_back(r);
   }
   end = std::chrono::system_clock::now();
   elapsed_time = end - start;
-  std::cout << "CPU triple tensor product: " << elapsed_time.count() << " secs\n";
-  
+  std::cout << "CPU triple tensor product: " << elapsed_time.count()
+            << " secs\n";
 }
 
 void run_benchmark(std::vector<int> vs, bool pinned = false) {
@@ -64,8 +66,8 @@ void run_benchmark(std::vector<int> vs, bool pinned = false) {
 
     // Benchmark for triple product
     std::vector<Mat<double>> tensor;
-    for (auto i=0; i<10; i++) {
-      tensor.push_back(Mat<double>::Random(size, size+20));
+    for (auto i = 0; i < 10; i++) {
+      tensor.push_back(Mat<double>::Random(size, size + 20));
     }
     std::cout << "Running triple product benchmark\n";
     triple_product_benchmark(A, C, tensor);
@@ -104,26 +106,24 @@ void triple_product() {
   std::vector<Mat<double>> tensor{C, D};
   std::vector<Mat<double>> rs = EC.triple_tensor_product(A, B, tensor);
 
-  for (const auto& x: rs) {
+  for (const auto &x : rs) {
     std::cout << "vector: " << x << "\n";
     std::cout << "sum: " << x.sum() << "\n";
   }
-  
+
   // auto size = 50;
   // Mat<double> A = Mat<double>::Random(size, size);
   // Mat<double> B = Mat<double>::Random(size+20, size);
   // Mat<double> C = Mat<double>::Random(size + 20, size);
   // Mat<double> D = Mat<double>::Random(size + 20, size);
 
-  
   // triple_product_benchmark(A, B, tensor);
-  
+
   // // Check results
   // // assert(abs(rs[0].sum() - 2854.) < 1e-8);
   // // assert(abs(rs[1].sum() - 3894.) < 1e-8);
   // std::cout << "triplet product seems to be correct\n";
 }
-
 
 int main(int argc, char *argv[]) {
 

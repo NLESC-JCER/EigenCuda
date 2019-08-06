@@ -53,7 +53,8 @@ unsigned EigenCuda<T>::initialize_Matrix(Mat<T> &A, bool copy_to_device) {
 }
 
 template <typename T>
-void EigenCuda<T>::gemm(Shapes sh, std::tuple<unsigned, unsigned, unsigned> ids) {
+void EigenCuda<T>::gemm(Shapes sh,
+                        std::tuple<unsigned, unsigned, unsigned> ids) {
   // Invoke the gemm subroutine from cublas
   unsigned id_A, id_B, id_C;
   std::tie(id_A, id_B, id_C) = ids;
@@ -66,11 +67,13 @@ void EigenCuda<T>::gemm(Shapes sh, std::tuple<unsigned, unsigned, unsigned> ids)
 
   // call gemm from cublas
   if constexpr (std::is_same<float, T>()) {
-    cublasSgemm(_handle, CUBLAS_OP_N, CUBLAS_OP_N, sh.A_rows, sh.B_cols, sh.A_cols,
-                _pa, dA, sh.A_rows, dB, sh.B_rows, _pb, dC, sh.C_rows);
+    cublasSgemm(_handle, CUBLAS_OP_N, CUBLAS_OP_N, sh.A_rows, sh.B_cols,
+                sh.A_cols, _pa, dA, sh.A_rows, dB, sh.B_rows, _pb, dC,
+                sh.C_rows);
   } else if (std::is_same<double, T>()) {
-    cublasDgemm(_handle, CUBLAS_OP_N, CUBLAS_OP_N, sh.A_rows, sh.B_cols, sh.A_cols,
-                _pa, dA, sh.A_rows, dB, sh.B_rows, _pb, dC, sh.C_rows);
+    cublasDgemm(_handle, CUBLAS_OP_N, CUBLAS_OP_N, sh.A_rows, sh.B_cols,
+                sh.A_cols, _pa, dA, sh.A_rows, dB, sh.B_rows, _pb, dC,
+                sh.C_rows);
   }
 }
 
@@ -86,7 +89,7 @@ template <typename T> Mat<T> EigenCuda<T>::dot(Mat<T> &A, Mat<T> &B) {
       initialize_Matrix(A), initialize_Matrix(B), initialize_Matrix(C, false));
 
   // process on GPU
-  Shapes sh {A.rows(), A.cols(), B.rows(), B.cols(), C.cols()};
+  Shapes sh{A.rows(), A.cols(), B.rows(), B.cols(), C.cols()};
   gemm(sh, ids);
 
   // send data back to CPU
@@ -130,10 +133,9 @@ EigenCuda<T>::triple_tensor_product(Mat<T> &A, Mat<T> &C,
   transform(tensor.begin(), tensor.end(), rs.begin(),
             [this, id_A, id_C, id_X, id_Y, id_matrix, size_Y, &A, &C, &X,
              &Y](Mat<T> &mtx) {
-	      
-	      assert(A.cols() == mtx.rows());
-	      assert(mtx.cols() == C.rows());
-	      
+              assert(A.cols() == mtx.rows());
+              assert(mtx.cols() == C.rows());
+
               // Copy matrix to the device
               T *d_matrix = _allocated.at(id_matrix);
               T *h_mtx = mtx.data();
@@ -143,13 +145,13 @@ EigenCuda<T>::triple_tensor_product(Mat<T> &A, Mat<T> &C,
               cudaMemcpy(d_matrix, h_mtx, size_mtx, cudaMemcpyHostToDevice);
 
               // Compute first matrix multiplication
-	      Shapes sh1 {mtx.rows(), mtx.cols(), C.rows(), C.cols(), X.rows()};
+              Shapes sh1{mtx.rows(), mtx.cols(), C.rows(), C.cols(), X.rows()};
               std::tuple<unsigned, unsigned, unsigned> ids =
                   std::make_tuple(id_matrix, id_C, id_X);
               gemm(sh1, ids);
 
               // compute the second matrix multiplication
-	      Shapes sh2 {A.rows(), A.cols(), X.rows(), X.cols(), Y.rows()};
+              Shapes sh2{A.rows(), A.cols(), X.rows(), X.cols(), Y.rows()};
               ids = std::make_tuple(id_A, id_X, id_Y);
               gemm(sh2, ids);
 
