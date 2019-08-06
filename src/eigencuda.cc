@@ -1,5 +1,4 @@
 #include "eigencuda.hpp"
-#include <iostream>
 
 namespace eigencuda {
 
@@ -54,12 +53,9 @@ unsigned EigenCuda<T>::initialize_Matrix(Mat<T> &A, bool copy_to_device) {
 }
 
 template <typename T>
-Mat<T> EigenCuda<T>::gemm(std::tuple<Mat<T> &, Mat<T> &, Mat<T> &> matrices,
-                          std::tuple<unsigned, unsigned, unsigned> ids) {
+void EigenCuda<T>::gemm(Shapes sh, std::tuple<unsigned, unsigned, unsigned> ids) {
   // Invoke the gemm subroutine from cublas
-  Mat<T> A, B, C;
   unsigned id_A, id_B, id_C;
-  std::tie(A, B, C) = matrices;
   std::tie(id_A, id_B, id_C) = ids;
 
   // Pointer to the arrays in the device
@@ -70,13 +66,12 @@ Mat<T> EigenCuda<T>::gemm(std::tuple<Mat<T> &, Mat<T> &, Mat<T> &> matrices,
 
   // call gemm from cublas
   if constexpr (std::is_same<float, T>()) {
-    cublasSgemm(_handle, CUBLAS_OP_N, CUBLAS_OP_N, A.rows(), B.cols(), A.cols(),
-                _pa, dA, A.rows(), dB, B.rows(), _pb, dC, C.rows());
+    cublasSgemm(_handle, CUBLAS_OP_N, CUBLAS_OP_N, sh.A_rows, sh.B_cols, sh.A_cols,
+                _pa, dA, sh.A_rows, dB, sh.B_rows, _pb, dC, sh.C_rows);
   } else if (std::is_same<double, T>()) {
-    cublasDgemm(_handle, CUBLAS_OP_N, CUBLAS_OP_N, A.rows(), B.cols(), A.cols(),
-                _pa, dA, A.rows(), dB, B.rows(), _pb, dC, C.rows());
+    cublasDgemm(_handle, CUBLAS_OP_N, CUBLAS_OP_N, sh.A_rows, sh.B_cols, sh.A_cols,
+                _pa, dA, sh.A_rows, dB, sh.B_rows, _pb, dC, sh.C_rows);
   }
-  return C;
 }
 
 template <typename T> Mat<T> EigenCuda<T>::dot(Mat<T> &A, Mat<T> &B) {
@@ -91,9 +86,8 @@ template <typename T> Mat<T> EigenCuda<T>::dot(Mat<T> &A, Mat<T> &B) {
       initialize_Matrix(A), initialize_Matrix(B), initialize_Matrix(C, false));
 
   // process on GPU
-  std::tuple<Mat<T> &, Mat<T> &, Mat<T> &> matrices =
-      std::forward_as_tuple(A, B, C);
-  gemm(matrices, ids);
+  Shapes sh {A.rows(), A.cols(), B.rows(), B.cols(), C.cols()};
+  gemm(sh, ids);
 
   // send data back to CPU
   T *hC = C.data();
@@ -114,22 +108,19 @@ template <typename T>
 std::vector<Mat<T>>
 EigenCuda<T>::triple_tensor_product(Mat<T> &A, Mat<T> &C,
                                     std::vector<Mat<T>> &tensor) {
-  // Perform the triple matrix multiplication A^T * matrix * C, for the vector
+  // Perform the triple matrix multiplication A * matrix * C, for the vector
   // of matrices given by tensor
   std::vector<Mat<T>> rs(tensor.size());
 
-  // Make a copy of the transpose
-  Mat<T> AT = A.transpose();
-
   // Copy Matrix A and B to the device
-  unsigned id_AT = initialize_Matrix(AT);
+  unsigned id_A = initialize_Matrix(A);
   unsigned id_C = initialize_Matrix(C);
 
   // allocate space in device for the temporal matrices
-  unsigned size_Y = AT.rows() * AT.cols() * sizeof(T);
-  Mat<T> X = Mat<T>::Zero(AT.cols(), C.cols());
-  Mat<T> Y = Mat<T>::Zero(AT.rows(), C.cols());
-  Mat<T> matrix = Mat<T>::Zero(AT.cols(), C.rows());
+  unsigned size_Y = A.rows() * A.cols() * sizeof(T);
+  Mat<T> X = Mat<T>::Zero(A.cols(), C.cols());
+  Mat<T> Y = Mat<T>::Zero(A.rows(), C.cols());
+  Mat<T> matrix = Mat<T>::Zero(A.cols(), C.rows());
 
   unsigned id_X = initialize_Matrix(X, false);
   unsigned id_Y = initialize_Matrix(Y, false);
@@ -137,8 +128,12 @@ EigenCuda<T>::triple_tensor_product(Mat<T> &A, Mat<T> &C,
 
   // Iterate over the tensor Using the previous allocated space in the device
   transform(tensor.begin(), tensor.end(), rs.begin(),
-            [this, id_AT, id_C, id_X, id_Y, id_matrix, size_Y, &AT, &C, &X,
+            [this, id_A, id_C, id_X, id_Y, id_matrix, size_Y, &A, &C, &X,
              &Y](Mat<T> &mtx) {
+	      
+	      assert(A.cols() == mtx.rows());
+	      assert(mtx.cols() == C.rows());
+	      
               // Copy matrix to the device
               T *d_matrix = _allocated.at(id_matrix);
               T *h_mtx = mtx.data();
@@ -147,27 +142,22 @@ EigenCuda<T>::triple_tensor_product(Mat<T> &A, Mat<T> &C,
               std::size_t size_mtx = mtx.rows() * mtx.cols() * sizeof(T);
               cudaMemcpy(d_matrix, h_mtx, size_mtx, cudaMemcpyHostToDevice);
 
-              // Reset temporal matrices to zero
-              X = Mat<T>::Zero(mtx.rows(), C.cols());
-              Y = Mat<T>::Zero(AT.rows(), C.cols());
-
               // Compute first matrix multiplication
+	      Shapes sh1 {mtx.rows(), mtx.cols(), C.rows(), C.cols(), X.rows()};
               std::tuple<unsigned, unsigned, unsigned> ids =
                   std::make_tuple(id_matrix, id_C, id_X);
-              std::tuple<Mat<T> &, Mat<T> &, Mat<T> &> matrices =
-                  std::forward_as_tuple(mtx, C, X);
-              gemm(matrices, ids);
+              gemm(sh1, ids);
 
               // compute the second matrix multiplication
-              ids = std::make_tuple(id_AT, id_X, id_Y);
-              matrices = std::forward_as_tuple(AT, X, Y);
-              gemm(matrices, ids);
+	      Shapes sh2 {A.rows(), A.cols(), X.rows(), X.cols(), Y.rows()};
+              ids = std::make_tuple(id_A, id_X, id_Y);
+              gemm(sh2, ids);
 
               // send data back to CPU
               T *hY = Y.data();
               T *dY = this->_allocated[id_Y];
               cudaMemcpy(hY, dY, size_Y, cudaMemcpyDeviceToHost);
-              Y = Eigen::Map<Mat<T>>(hY, AT.rows(), C.cols());
+              Y = Eigen::Map<Mat<T>>(hY, A.rows(), C.cols());
 
               return Y;
             });

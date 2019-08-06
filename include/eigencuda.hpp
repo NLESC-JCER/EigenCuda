@@ -22,6 +22,15 @@ inline cudaError_t checkCuda(cudaError_t result) {
   return result;
 }
 
+// Structure with the sizes to call ?GEMM
+  struct Shapes {
+    int A_rows;
+    int A_cols;
+    int B_rows;
+    int B_cols;
+    int C_rows;
+  };
+  
 // col Major for CUDA
 template <typename T>
 using Mat = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
@@ -42,7 +51,7 @@ public:
   // Matrix matrix multiplication
   Mat<T> dot(Mat<T> &A, Mat<T> &B);
 
-  // Perform the triple matrix multiplication A^T * matrix * C, for the vector
+  // Perform the triple matrix multiplication A * matrix * C, for the vector
   // of matrices given by tensor
   std::vector<Mat<T>> triple_tensor_product(Mat<T> &A, Mat<T> &C,
                                             std::vector<Mat<T>> &tensor);
@@ -58,8 +67,7 @@ private:
   unsigned initialize_Matrix(Mat<T> &A, bool copy_to_device = true);
 
   // Invoke the ?gemm function of cublas
-  Mat<T> gemm(std::tuple<Mat<T> &, Mat<T> &, Mat<T> &> matrices,
-              std::tuple<unsigned, unsigned, unsigned> ids);
+  void gemm(Shapes shapes, std::tuple<unsigned, unsigned, unsigned> ids);
 
   // Deallocate certain matrix from the device
   void free_matrix(unsigned id);
