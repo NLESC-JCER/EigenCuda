@@ -30,10 +30,11 @@ struct Shapes {
   int B_cols;
   int C_rows;
 
-  Shapes(long int _a_rows, long int _a_cols, long int _b_rows, long int _b_cols, long int _c_rows):
-    A_rows{static_cast<int>(_a_rows)}, A_cols{static_cast<int>(_a_cols)},
-    B_rows{static_cast<int>(_b_rows)}, B_cols{static_cast<int>(_b_cols)},
-    C_rows{static_cast<int>(_c_rows)} {}
+  Shapes(long int _a_rows, long int _a_cols, long int _b_rows, long int _b_cols,
+         long int _c_rows)
+      : A_rows{static_cast<int>(_a_rows)}, A_cols{static_cast<int>(_a_cols)},
+        B_rows{static_cast<int>(_b_rows)}, B_cols{static_cast<int>(_b_cols)},
+        C_rows{static_cast<int>(_c_rows)} {}
 };
 
 // col Major for CUDA
