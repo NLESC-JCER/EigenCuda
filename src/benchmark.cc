@@ -2,27 +2,26 @@
 #include "matmul.hpp"
 #include <chrono>
 #include <cxxopts.hpp>
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <vector>
 
 using eigencuda::Mat;
 
-
-void write_vector(std::vector<int> sizes, std::vector<std::tuple<double, double>> vs) {
+void write_vector(std::vector<int> sizes,
+                  std::vector<std::tuple<double, double>> vs) {
   std::ofstream file;
-  double x,y;
-  
+  double x, y;
+
   file.open("times_benchmark.txt");
-  for (auto i=0; i < vs.size(); i++) {
+  for (auto i = 0; i < vs.size(); i++) {
     std::tie(x, y) = vs[i];
     file << sizes[i] << " " << x << " " << y << "\n";
   }
   file.close();
 }
 
-template <typename T>
-void dot_benchmark(Mat<T> &A, Mat<T> &B, bool pinned) {
+template <typename T> void dot_benchmark(Mat<T> &A, Mat<T> &B, bool pinned) {
   // chrono
   std::chrono::time_point<std::chrono::system_clock> start, end;
 
@@ -39,8 +38,8 @@ void dot_benchmark(Mat<T> &A, Mat<T> &B, bool pinned) {
 }
 
 template <typename T>
-std::tuple<double, double> triple_product_benchmark(Mat<T> &A, Mat<T> &B,
-						    std::vector<Mat<T>> tensor) {
+std::tuple<double, double>
+triple_product_benchmark(Mat<T> &A, Mat<T> &B, std::vector<Mat<T>> tensor) {
   // chrono
   std::chrono::time_point<std::chrono::system_clock> start, end;
 
@@ -70,11 +69,11 @@ std::tuple<double, double> triple_product_benchmark(Mat<T> &A, Mat<T> &B,
 void run_benchmark(std::vector<int> vs, bool pinned = false) {
 
   std::vector<std::tuple<double, double>> times;
-  
+
   for (auto size : vs) {
     // Create CPU matrices
     std::cout << "running benchmark!\n";
-    
+
     Mat<double> A = Mat<double>::Random(size, size);
     Mat<double> B = Mat<double>::Random(size, size + 20);
     Mat<double> C = Mat<double>::Random(size + 20, size);
@@ -83,7 +82,7 @@ void run_benchmark(std::vector<int> vs, bool pinned = false) {
         (pinned) ? "Pinned Data Transfer" : "Pageable Data Transfer";
     std::cout << "size: " << size << "\n";
     std::cout << msg << "\n";
-    
+
     dot_benchmark<double>(A, B, pinned);
 
     // Benchmark for triple product
@@ -123,7 +122,7 @@ void triple_product() {
   B << 5., 6., 7., 8., 9., 10.;
   C << 9., 10., 11., 12., 13., 14., 15., 16., 17.;
   D << 13., 14., 15., 16., 17., 18., 19., 20., 21.;
-  
+
   std::vector<Mat<double>> tensor{C, D};
   std::vector<Mat<double>> rs = EC.triple_tensor_product(A, B, tensor);
 
@@ -131,7 +130,7 @@ void triple_product() {
   assert(abs(rs[0].sum() - 12993.) < 1e-8);
   assert(abs(rs[1].sum() - 16773.) < 1e-8);
 
-  std::cout << "triple product done!\n";  
+  std::cout << "triple product done!\n";
 }
 
 int main(int argc, char *argv[]) {
