@@ -4,7 +4,7 @@ namespace eigencuda {
 
 /*
  * Removed all the allocated arrays from the device
- */  
+ */
 template <typename T> EigenCuda<T>::~EigenCuda() {
   cublasDestroy(_handle);
   for (auto &p : _allocated)
@@ -14,7 +14,7 @@ template <typename T> EigenCuda<T>::~EigenCuda() {
 /*
  * Allocate memory in the device using either pinned or pageable (default)
  * memory
- */   
+ */
 template <typename T> void EigenCuda<T>::gpu_alloc(T **x, std::size_t n) const {
   (_pinned) ? cudaMallocHost(x, n) : cudaMalloc(x, n);
 }
@@ -29,7 +29,7 @@ template <typename T> void EigenCuda<T>::gpu_free(T *x) const {
 /*
  * Release the memory associated with the pointer `id` and removed the pointer
  * from the tracked pointers collection
- */  
+ */
 template <typename T> void EigenCuda<T>::free_matrix(int id) {
   // Free Array with id from the device
   gpu_free(_allocated.at(id));
@@ -69,7 +69,7 @@ int EigenCuda<T>::initialize_Matrix(Mat<T> &A, bool copy_to_device) {
   return id;
 }
 /*
- * Call the gemm function from cublas, resulting in the multiplication of the 
+ * Call the gemm function from cublas, resulting in the multiplication of the
  * two matrices with identifiers id_A and id_B. The result is stored in
  * a Matrix (pointer) with identifier id_C.
  */
@@ -104,14 +104,13 @@ void EigenCuda<T>::gemm(Shapes sh, std::tuple<int, int, int> ids) {
 }
 
 /*
- * Perform the matrix-matrix multiplication between A and B. First, 
- * memory is allocated in the device for both matrices then a third temporal array
- * is allocated in the device that will contain the results. Finally, the
+ * Perform the matrix-matrix multiplication between A and B. First,
+ * memory is allocated in the device for both matrices then a third temporal
+ * array is allocated in the device that will contain the results. Finally, the
  * memory contains in the temporal result is copy back to the main memory and
  * Free the resources
  */
-template <typename T>
-Mat<T> EigenCuda<T>::dot(Mat<T> &A, Mat<T> &B) {
+template <typename T> Mat<T> EigenCuda<T>::dot(Mat<T> &A, Mat<T> &B) {
   // Matrix to store the result
   Mat<T> C = Mat<T>::Zero(A.rows(), B.cols());
   std::size_t size_C = C.size() * sizeof(T);
