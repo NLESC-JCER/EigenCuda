@@ -74,8 +74,7 @@ int EigenCuda<T>::initialize_Matrix(Mat<T> &A, bool copy_to_device) {
  * a Matrix (pointer) with identifier id_C.
  */
 template <typename T>
-void EigenCuda<T>::gemm(Shapes sh,
-                        std::tuple<int, int, int> ids) {
+void EigenCuda<T>::gemm(Shapes sh, std::tuple<int, int, int> ids) {
   // Invoke the gemm subroutine from cublas
   int id_A, id_B, id_C;
   std::tie(id_A, id_B, id_C) = ids;
