@@ -1,5 +1,4 @@
 #include "eigencuda.hpp"
-#include "matmul.hpp"
 #include <chrono>
 #include <cxxopts.hpp>
 #include <fstream>

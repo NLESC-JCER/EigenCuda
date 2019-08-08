@@ -28,25 +28,20 @@ This packages assumes that you have installed the following packages:
 ```cpp
 #include "eigencuda.hpp"
 
-auto size = 100;
-Mat<float> A = Mat<float>::Random(size + 10, size);
-Mat<float> B = Mat<float>::Random(size, size + 20);
+using eigencuda::Mat;
 
-Mat<float> C = eigencuda::cublas_gemm(A, B);
+eigencuda::EigenCuda<double> EC;
+Mat<double> A = Mat<double>::Zero(2, 2);
+Mat<double> B = Mat<double>::Zero(2, 2);
+
+A << 1., 2., 3., 4.;
+B << 5., 6., 7., 8.;
+
+Mat<double> C = EC.dot(A, B);
+assert(abs(C.sum() - 134.) < 1e-8);
 ```
 where `Mat` is defined as :
 ```cpp
 template <typename T>
 using Mat = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
 ```
-
-## Running the example
-```
-./cublas --size 100
-```
-
-where `size` is the size of the matrix 
-
-## Example of performance
-
-![alt text](./perf_gemm_gpu.png)
