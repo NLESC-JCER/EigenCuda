@@ -130,7 +130,7 @@ template <typename T> Mat<T> EigenCuda<T>::dot(Mat<T> &A, Mat<T> &B) {
 
   // Free the result from the device
   free_matrix(std::get<0>(ids)); // Free A
-  free_matrix(std::get<1>(ids)); // Free B  
+  free_matrix(std::get<1>(ids)); // Free B
   free_matrix(std::get<2>(ids)); // Free C
 
   // create an eigen matrix
@@ -197,10 +197,10 @@ EigenCuda<T>::triple_tensor_product(Mat<T> &A, Mat<T> &C,
             });
 
   // Free all the allocated arrays from the device
-  for (int x: {id_A, id_C, id_X, id_Y, id_matrix}) {
+  for (int x : {id_A, id_C, id_X, id_Y, id_matrix}) {
     free_matrix(x);
   }
-  
+
   return rs;
 }
 
