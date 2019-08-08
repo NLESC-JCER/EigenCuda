@@ -5,27 +5,27 @@ namespace eigencuda {
 template <typename T> EigenCuda<T>::~EigenCuda() {
   cublasDestroy(_handle);
   for (auto &p : _allocated)
-    this->fun_free(p.second);
+    this->gpu_free(p.second);
 }
 
-template <typename T> void EigenCuda<T>::fun_alloc(T **x, std::size_t n) const {
+template <typename T> void EigenCuda<T>::gpu_alloc(T **x, std::size_t n) const {
   // Allocate memory in the device
   (_pinned) ? cudaMallocHost(x, n) : cudaMalloc(x, n);
 }
 
-template <typename T> void EigenCuda<T>::fun_free(T *x) const {
+template <typename T> void EigenCuda<T>::gpu_free(T *x) const {
   // Deallocate memory from the device
   (_pinned) ? cudaFreeHost(x) : cudaFree(x);
 };
 
-template <typename T> void EigenCuda<T>::free_matrix(unsigned id) {
+template <typename T> void EigenCuda<T>::free_matrix(int id) {
   // Free Array with id from the device
-  fun_free(_allocated.at(id));
+  gpu_free(_allocated.at(id));
   _allocated.erase(id);
 }
 
 template <typename T>
-unsigned EigenCuda<T>::initialize_Matrix(Mat<T> &A, bool copy_to_device) {
+int EigenCuda<T>::initialize_Matrix(Mat<T> &A, bool copy_to_device) {
   // Copy two matrices to the device
 
   // size of the Matrices
@@ -35,10 +35,10 @@ unsigned EigenCuda<T>::initialize_Matrix(Mat<T> &A, bool copy_to_device) {
   T *dA;
 
   // Allocate either pageable or pinned memory
-  fun_alloc(&dA, size_A);
+  gpu_alloc(&dA, size_A);
 
   // Track the allocated variables
-  unsigned id = _counter;
+  int id = _counter;
   _allocated.emplace(std::make_pair(id, dA));
   _counter += 1;
 
@@ -54,9 +54,9 @@ unsigned EigenCuda<T>::initialize_Matrix(Mat<T> &A, bool copy_to_device) {
 
 template <typename T>
 void EigenCuda<T>::gemm(Shapes sh,
-                        std::tuple<unsigned, unsigned, unsigned> ids) {
+                        std::tuple<int, int, int> ids) {
   // Invoke the gemm subroutine from cublas
-  unsigned id_A, id_B, id_C;
+  int id_A, id_B, id_C;
   std::tie(id_A, id_B, id_C) = ids;
 
   // Pointer to the arrays in the device
@@ -64,6 +64,12 @@ void EigenCuda<T>::gemm(Shapes sh,
   dA = _allocated.at(id_A);
   dB = _allocated.at(id_B);
   dC = _allocated.at(id_C);
+
+  // Scalar constanst for calling blas
+  T _alpha = 1.;
+  T _beta = 0.;
+  const T *_pa = &_alpha;
+  const T *_pb = &_beta;
 
   // call gemm from cublas
   if constexpr (std::is_same<float, T>()) {
@@ -85,7 +91,7 @@ template <typename T> Mat<T> EigenCuda<T>::dot(Mat<T> &A, Mat<T> &B) {
   std::size_t size_C = C.size() * sizeof(T);
 
   // Indices of the matrices on the device
-  std::tuple<unsigned, unsigned, unsigned> ids = std::make_tuple(
+  std::tuple<int, int, int> ids = std::make_tuple(
       initialize_Matrix(A), initialize_Matrix(B), initialize_Matrix(C, false));
 
   // process on GPU
@@ -98,7 +104,7 @@ template <typename T> Mat<T> EigenCuda<T>::dot(Mat<T> &A, Mat<T> &B) {
   cudaMemcpy(hC, dC, size_C, cudaMemcpyDeviceToHost);
 
   // Free the result from the device
-  unsigned id_C = std::get<2>(ids);
+  int id_C = std::get<2>(ids);
   free_matrix(id_C);
 
   // create an eigen matrix
@@ -116,18 +122,18 @@ EigenCuda<T>::triple_tensor_product(Mat<T> &A, Mat<T> &C,
   std::vector<Mat<T>> rs(tensor.size());
 
   // Copy Matrix A and B to the device
-  unsigned id_A = initialize_Matrix(A);
-  unsigned id_C = initialize_Matrix(C);
+  int id_A = initialize_Matrix(A);
+  int id_C = initialize_Matrix(C);
 
   // allocate space in device for the temporal matrices
-  unsigned size_Y = A.rows() * C.cols() * sizeof(T);
+  int size_Y = A.rows() * C.cols() * sizeof(T);
   Mat<T> X = Mat<T>::Zero(A.cols(), C.cols());
   Mat<T> Y = Mat<T>::Zero(A.rows(), C.cols());
   Mat<T> matrix = Mat<T>::Zero(A.cols(), C.rows());
 
-  unsigned id_X = initialize_Matrix(X, false);
-  unsigned id_Y = initialize_Matrix(Y, false);
-  unsigned id_matrix = initialize_Matrix(matrix, false);
+  int id_X = initialize_Matrix(X, false);
+  int id_Y = initialize_Matrix(Y, false);
+  int id_matrix = initialize_Matrix(matrix, false);
 
   // Iterate over the tensor Using the previous allocated space in the device
   transform(tensor.begin(), tensor.end(), rs.begin(),
@@ -146,7 +152,7 @@ EigenCuda<T>::triple_tensor_product(Mat<T> &A, Mat<T> &C,
 
               // Compute first matrix multiplication
               Shapes sh1{mtx.rows(), mtx.cols(), C.rows(), C.cols(), X.rows()};
-              std::tuple<unsigned, unsigned, unsigned> ids =
+              std::tuple<int, int, int> ids =
                   std::make_tuple(id_matrix, id_C, id_X);
               gemm(sh1, ids);
 

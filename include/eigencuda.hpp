@@ -63,33 +63,27 @@ public:
 
 private:
   // Allocate memory in the device
-  void fun_alloc(T **x, std::size_t n) const;
+  void gpu_alloc(T **x, std::size_t n) const;
 
   // Deallocate memory from the device
-  void fun_free(T *x) const;
+  void gpu_free(T *x) const;
 
   // Copy matricex to the device
-  unsigned initialize_Matrix(Mat<T> &A, bool copy_to_device = true);
+  int initialize_Matrix(Mat<T> &A, bool copy_to_device = true);
 
   // Invoke the ?gemm function of cublas
-  void gemm(Shapes shapes, std::tuple<unsigned, unsigned, unsigned> ids);
+  void gemm(Shapes shapes, std::tuple<int, int, int> ids);
 
   // Deallocate certain matrix from the device
-  void free_matrix(unsigned id);
+  void free_matrix(int id);
 
   // Cuda variables
   cublasHandle_t _handle;
   bool _pinned = false;
 
   // Allocation booking
-  unsigned _counter = 0;
-  std::unordered_map<unsigned, T *> _allocated;
-
-  // Scalar constanst for calling blas
-  T _alpha = 1.;
-  T _beta = 0.;
-  const T *_pa = &_alpha;
-  const T *_pb = &_beta;
+  int _counter = 0;
+  std::unordered_map<int, T *> _allocated;
 };
 
 } // namespace eigencuda
