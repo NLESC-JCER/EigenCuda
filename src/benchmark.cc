@@ -26,8 +26,6 @@ template <typename T> void dot_benchmark(Mat<T> &A, Mat<T> &B, bool pinned) {
 
   start = std::chrono::system_clock::now();
   eigencuda::EigenCuda<T> EC{pinned};
-  // Mat<T> R = eigencuda::cublas_gemm(A, B, C, pinned);
-  // Mat<T> R = eigencuda::triple_product(A, B, C, pinned);
   Mat<T> R = EC.dot(A, B);
 
   // outputs

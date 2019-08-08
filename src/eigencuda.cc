@@ -129,8 +129,9 @@ template <typename T> Mat<T> EigenCuda<T>::dot(Mat<T> &A, Mat<T> &B) {
   cudaMemcpy(hC, dC, size_C, cudaMemcpyDeviceToHost);
 
   // Free the result from the device
-  int id_C = std::get<2>(ids);
-  free_matrix(id_C);
+  free_matrix(std::get<0>(ids)); // Free A
+  free_matrix(std::get<1>(ids)); // Free B  
+  free_matrix(std::get<2>(ids)); // Free C
 
   // create an eigen matrix
   C = Eigen::Map<Mat<T>>(hC, A.rows(), B.cols());
@@ -195,6 +196,11 @@ EigenCuda<T>::triple_tensor_product(Mat<T> &A, Mat<T> &C,
               return Y;
             });
 
+  // Free all the allocated arrays from the device
+  for (int x: {id_A, id_C, id_X, id_Y, id_matrix}) {
+    free_matrix(x);
+  }
+  
   return rs;
 }
 
