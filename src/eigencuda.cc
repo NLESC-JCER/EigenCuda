@@ -110,7 +110,8 @@ void EigenCuda<T>::gemm(Shapes sh, std::tuple<int, int, int> ids) {
  * memory contains in the temporal result is copy back to the main memory and
  * Free the resources
  */
-template <typename T> Mat<T> EigenCuda<T>::dot(const Mat<T> &A, const Mat<T> &B) {
+template <typename T>
+Mat<T> EigenCuda<T>::dot(const Mat<T> &A, const Mat<T> &B) {
   // Matrix to store the result
   Mat<T> C = Mat<T>::Zero(A.rows(), B.cols());
   std::size_t size_C = C.size() * sizeof(T);
