@@ -141,8 +141,8 @@ template <typename T> Mat<T> EigenCuda<T>::dot(const Mat<T> &A, const Mat<T> &B)
 
 template <typename T>
 std::vector<Mat<T>>
-EigenCuda<T>::triple_tensor_product(Mat<T> &A, Mat<T> &C,
-                                    std::vector<Mat<T>> &tensor) {
+EigenCuda<T>::triple_tensor_product(const Mat<T> &A, const Mat<T> &C,
+                                    const std::vector<Mat<T>> &tensor) {
   // Perform the triple matrix multiplication A * matrix * C, for the vector
   // of matrices given by tensor
   std::vector<Mat<T>> rs(tensor.size());
@@ -164,13 +164,13 @@ EigenCuda<T>::triple_tensor_product(Mat<T> &A, Mat<T> &C,
   // Iterate over the tensor Using the previous allocated space in the device
   transform(tensor.begin(), tensor.end(), rs.begin(),
             [this, id_A, id_C, id_X, id_Y, id_matrix, size_Y, &A, &C, &X,
-             &Y](Mat<T> &mtx) {
+             &Y](const Mat<T> &mtx) {
               assert(A.cols() == mtx.rows());
               assert(mtx.cols() == C.rows());
 
               // Copy matrix to the device
               T *d_matrix = _allocated.at(id_matrix);
-              T *h_mtx = mtx.data();
+              const T *h_mtx = mtx.data();
 
               // move temporal matrix to the preallocated space
               std::size_t size_mtx = mtx.rows() * mtx.cols() * sizeof(T);

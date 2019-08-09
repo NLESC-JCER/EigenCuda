@@ -75,7 +75,7 @@ public:
 
   // Perform the triple matrix multiplication A * matrix * C, for the vector
   // of matrices given by tensor
-  std::vector<Mat<T>> triple_tensor_product(Mat<T> &A, Mat<T> &C, std::vector<Mat<T>> &tensor);
+  std::vector<Mat<T>> triple_tensor_product(const Mat<T> &A, const Mat<T> &C, const std::vector<Mat<T>> &tensor);
 
 private:
   // Allocate memory in the device
