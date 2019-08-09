@@ -103,6 +103,7 @@ void dot_product() {
 
   Mat<double> C = EC.dot(A, B);
   assert(abs(C.sum() - 134.) < 1e-8);
+  std::cout << "dot product succeeded!\n";
 }
 
 void triple_product() {
@@ -127,7 +128,7 @@ void triple_product() {
   assert(abs(rs[0].sum() - 12993.) < 1e-8);
   assert(abs(rs[1].sum() - 16773.) < 1e-8);
 
-  std::cout << "triple product done!\n";
+  std::cout << "triple product succeeded!\n";
 }
 
 int main(int argc, char *argv[]) {

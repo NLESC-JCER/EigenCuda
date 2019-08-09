@@ -43,7 +43,7 @@ template <typename T> void EigenCuda<T>::free_matrix(int id) {
  * values may not be important like a temporal matrix.
  */
 template <typename T>
-int EigenCuda<T>::initialize_Matrix(Mat<T> &A, bool copy_to_device) {
+int EigenCuda<T>::initialize_Matrix(const Mat<T> &A, bool copy_to_device) {
 
   // size of the Matrices
   std::size_t size_A = A.size() * sizeof(T);
@@ -62,7 +62,7 @@ int EigenCuda<T>::initialize_Matrix(Mat<T> &A, bool copy_to_device) {
   // Transfer data to the GPU
   if (copy_to_device) {
     // Pointers at the host
-    T *hA = A.data();
+    const T *hA = A.data();
     cudaMemcpy(dA, hA, size_A, cudaMemcpyHostToDevice);
   }
 
@@ -110,7 +110,7 @@ void EigenCuda<T>::gemm(Shapes sh, std::tuple<int, int, int> ids) {
  * memory contains in the temporal result is copy back to the main memory and
  * Free the resources
  */
-template <typename T> Mat<T> EigenCuda<T>::dot(Mat<T> &A, Mat<T> &B) {
+template <typename T> Mat<T> EigenCuda<T>::dot(const Mat<T> &A, const Mat<T> &B) {
   // Matrix to store the result
   Mat<T> C = Mat<T>::Zero(A.rows(), B.cols());
   std::size_t size_C = C.size() * sizeof(T);
