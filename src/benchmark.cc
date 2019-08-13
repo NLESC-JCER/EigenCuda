@@ -131,6 +131,34 @@ void triple_product() {
   std::cout << "triple product succeeded!\n";
 }
 
+void right_matrix_tensor() {
+  // Define matrices and class to handle GPU resources
+  eigencuda::EigenCuda<double> EC;
+  
+  // Call matrix multiplication GPU
+  Mat<double> A = Mat<double>::Zero(2, 3);
+  Mat<double> B = Mat<double>::Zero(3, 2);
+  Mat<double> C = Mat<double>::Zero(3, 2);
+  Mat<double> D = Mat<double>::Zero(3, 2);
+
+  // Define matrices
+  A << 1., 2., 3., 4., 5., 6.;
+  B << 5., 6., 7., 8., 9., 10.;
+  C << 9., 10., 11., 12., 13., 14.;
+  D << 13., 14., 15., 16., 17., 18.;
+
+  std::vector<Mat<double>> tensor{B, C, D};
+  std::vector<Mat<double>> rs = EC.right_matrix_tensor(A, tensor);
+
+  // Check results
+  assert(abs(rs[0].sum() - 486.) < 1e-8);
+  assert(abs(rs[1].sum() - 738.) < 1e-8);
+  assert(abs(rs[1].sum() - 990.) < 1e-8);
+
+  std::cout << "right matrix product succeeded!\n";
+  
+}
+
 int main(int argc, char *argv[]) {
 
   // parse the input
@@ -144,8 +172,9 @@ int main(int argc, char *argv[]) {
 
   std::vector<int> vs{100, 200, 500, 1000, 1500, 2000};
 
-  run_benchmark(vs, pinned);
+  // run_benchmark(vs, pinned);
   dot_product();
   triple_product();
+  right_matrix_tensor();
   return 0;
 }
