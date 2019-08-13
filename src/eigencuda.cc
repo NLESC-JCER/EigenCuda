@@ -210,11 +210,12 @@ EigenCuda<T>::triple_tensor_product(const Mat<T> &A, const Mat<T> &C,
  * Each iteration perform the operation mtx * A,  where mtx is the ith component
  * of the tensor
  */
- template <typename T>
+template <typename T>
 std::vector<Mat<T>>
-EigenCuda<T>::right_matrix_tensor(const Mat<T> &A, const std::vector<Mat<T>> &tensor){
-   // result vector
-   std::vector<Mat<T>> rs(tensor.size());
+EigenCuda<T>::right_matrix_tensor(const Mat<T> &A,
+                                  const std::vector<Mat<T>> &tensor) {
+  // result vector
+  std::vector<Mat<T>> rs(tensor.size());
 
   // Copy Matrix A to the device
   int id_A = initialize_Matrix(A);
@@ -224,17 +225,16 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &A, const std::vector<Mat<T>> &te
   int size_Y = rows * A.cols() * sizeof(T);
   Mat<T> Y = Mat<T>::Zero(rows, A.cols());
   Mat<T> matrix = Mat<T>::Zero(rows, A.rows());
-  
+
   int id_Y = initialize_Matrix(Y, false);
   int id_matrix = initialize_Matrix(matrix, false);
 
   // Iterate over the tensor Using the previous allocated space in the device
   transform(tensor.begin(), tensor.end(), rs.begin(),
             [this, id_A, id_Y, id_matrix, size_Y, &A, &Y](const Mat<T> &mtx) {
+              // Check that the matrix has the right dimension
+              assert(mtx.cols() == A.rows());
 
-	      // Check that the matrix has the right dimension
-	      assert(mtx.cols() == A.rows());
-	      
               // Copy matrix to the device
               T *d_matrix = _allocated.at(id_matrix);
               const T *h_mtx = mtx.data();
@@ -249,23 +249,23 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &A, const std::vector<Mat<T>> &te
                   std::make_tuple(id_matrix, id_A, id_Y);
               gemm(sh1, ids);
 
-	      // send data back to CPU
+              // send data back to CPU
               T *hY = Y.data();
               T *dY = this->_allocated[id_Y];
               cudaMemcpy(hY, dY, size_Y, cudaMemcpyDeviceToHost);
               Y = Eigen::Map<Mat<T>>(hY, mtx.rows(), A.cols());
-	      
-	      return Y;
-	    });
+
+              return Y;
+            });
 
   // Free all the allocated arrays from the device
   for (int x : {id_A, id_Y, id_matrix}) {
     free_matrix(x);
   }
-  
+
   return rs;
- }
-  
+}
+
 // explicit instantiations
 template class EigenCuda<float>;
 template class EigenCuda<double>;
