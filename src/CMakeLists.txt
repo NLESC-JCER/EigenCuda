@@ -28,6 +28,7 @@ target_link_libraries(eigencuda
 
 target_link_libraries(benchmark
   PRIVATE
+    Eigen3::Eigen
     eigencuda
     cxxopts::cxxopts
   )
