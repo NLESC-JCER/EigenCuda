@@ -9,13 +9,14 @@ namespace eigencuda {
 template <typename T> Mat<T> stack(const std::vector<Mat<T>> &tensor) {
 
   int rows = tensor[0].size(); // size of each matrix
-  int cols = tensor.size(); // number of matrices in tensor
+  int cols = tensor.size();    // number of matrices in tensor
 
   // row major to save the tensor
   Mat<T> rs = Mat<T>::Zero(rows, cols);
 
   for (auto i = 0; i < cols; i++) {
-    rs.col(i) = Eigen::Map<const Eigen::Matrix<T, Eigen::Dynamic, 1>>(tensor[i].data(), tensor[i].size());
+    rs.col(i) = Eigen::Map<const Eigen::Matrix<T, Eigen::Dynamic, 1>>(
+        tensor[i].data(), tensor[i].size());
   }
   return rs;
 }
@@ -55,14 +56,16 @@ template <typename T> void EigenCuda<T>::free_matrix(int id) {
 }
 
 /*
- * Method to shift pointers of the allocated tensor in the device. When iterating
- * the tensor this method is invoked to get the next submatrix from a given tensor
+ * Method to shift pointers of the allocated tensor in the device. When
+ * iterating the tensor this method is invoked to get the next submatrix from a
+ * given tensor
  */
 template <typename T>
-void EigenCuda<T>::shift_pointers_by(const std::vector<int> &pointers, const std::vector<long int> &shifts) {
-  for (unsigned i=0; i < pointers.size(); i++) {
-    _allocated.at(pointers[i]) += static_cast<int>(shifts[i]);      
-	 }
+void EigenCuda<T>::shift_pointers_by(const std::vector<int> &pointers,
+                                     const std::vector<long int> &shifts) {
+  for (unsigned i = 0; i < pointers.size(); i++) {
+    _allocated.at(pointers[i]) += static_cast<int>(shifts[i]);
+  }
 }
 /*
  * Allocate memory in the device for matrix A, then if if `copy_to_device`
@@ -239,9 +242,8 @@ EigenCuda<T>::triple_tensor_product(const Mat<T> &A, const Mat<T> &C,
  * of the tensor
  */
 template <typename T>
-Mat<T>
-EigenCuda<T>::right_matrix_tensor(const Mat<T> &A,
-                                  const std::vector<Mat<T>> &tensor) {  
+Mat<T> EigenCuda<T>::right_matrix_tensor(const Mat<T> &A,
+                                         const std::vector<Mat<T>> &tensor) {
   // Copy Matrix A to the device
   int id_A = initialize_Matrix(A);
 
@@ -254,26 +256,25 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &A,
   // rows and cols of matrices store in the tensor
   int mtx_rows = tensor[0].rows();
   int mtx_cols = tensor[0].cols();
-	 
+
   // Allocate space fo the result Tensor
-  Mat<T> Y = Mat<T>::Zero( mtx_rows * A.cols(), super_matrix.cols());
+  Mat<T> Y = Mat<T>::Zero(mtx_rows * A.cols(), super_matrix.cols());
   int id_Y = initialize_Matrix(Y, false);
   T *init_Y = _allocated.at(id_Y); // pointer to initial location
-  
-  // Iterate over the tensor Using the previous allocated space in the device
-  for (unsigned i=0; i < tensor.size(); i++) {
-	 
-       // Compute the matrix multiplication
-       Shapes sh1{mtx_rows, mtx_cols, A.rows(), A.cols(), mtx_rows};
-       std::tuple<int, int, int> ids =
-       std::make_tuple(id_super, id_A, id_Y);
-       gemm(sh1, ids);
 
-       // shift the pointer containing the super_matrix and the result tensor
-       std::vector<int> pointers{id_super, id_Y};
-       std::vector<long int> shifts{mtx_rows * mtx_cols, mtx_rows * A.cols()};
-       shift_pointers_by(pointers, shifts);
-       }
+  // Iterate over the tensor Using the previous allocated space in the device
+  for (unsigned i = 0; i < tensor.size(); i++) {
+
+    // Compute the matrix multiplication
+    Shapes sh1{mtx_rows, mtx_cols, A.rows(), A.cols(), mtx_rows};
+    std::tuple<int, int, int> ids = std::make_tuple(id_super, id_A, id_Y);
+    gemm(sh1, ids);
+
+    // shift the pointer containing the super_matrix and the result tensor
+    std::vector<int> pointers{id_super, id_Y};
+    std::vector<long int> shifts{mtx_rows * mtx_cols, mtx_rows * A.cols()};
+    shift_pointers_by(pointers, shifts);
+  }
 
   // send data back to CPU
   T *hY = Y.data();
