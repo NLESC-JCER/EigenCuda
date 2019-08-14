@@ -147,7 +147,7 @@ void right_matrix_tensor() {
   D << 13., 14., 15., 16., 17., 18.;
 
   std::vector<Mat<double>> tensor{B, C, D};
-  std::vector<Mat<double>> rs = EC.right_matrix_tensor(A, tensor);
+  Mat<double> rs = EC.right_matrix_tensor(A, tensor);
 
   // Check results
   assert(abs(rs[0].sum() - 486.) < 1e-8);
@@ -155,16 +155,6 @@ void right_matrix_tensor() {
   assert(abs(rs[1].sum() - 990.) < 1e-8);
 
   std::cout << "right matrix product succeeded!\n";
-}
-
-void test() {
-  Mat<double> A = Mat<double>::Ones(2, 2);
-  Mat<double> B = Mat<double>::Zero(2, 2);
-
-  B << 2, 3, 4, 5;
-
-  Mat<double> rs = eigencuda::stack<double>(std::vector<Mat<double>>{A, B});
-  std::cout << "result: " << rs << "\n";
 }
 
 int main() {
@@ -176,6 +166,5 @@ int main() {
   dot_product();
   triple_product();
   right_matrix_tensor();
-  test();
   return 0;
 }

@@ -79,8 +79,8 @@ public:
                                             const std::vector<Mat<T>> &tensor);
 
   // Perform a multiplication between a matrix and a tensor
-  std::vector<Mat<T>> right_matrix_tensor(const Mat<T> &A,
-                                          const std::vector<Mat<T>> &tensor);
+  Mat<T> right_matrix_tensor(const Mat<T> &A,
+			     const std::vector<Mat<T>> &tensor);
 
 private:
   // Allocate memory in the device
@@ -98,6 +98,9 @@ private:
   // Deallocate Matrix identifier `id` from the device
   void free_matrix(int id);
 
+  // Shift the pointers of the allocated tensors in the device
+  void shift_pointers_by(const std::vector<int> &pointers, const std::vector<long int> &shifts);
+  
   // Cuda variables
   cublasHandle_t _handle;
   bool _pinned = false;
