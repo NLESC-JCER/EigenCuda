@@ -18,8 +18,8 @@ BOOST_AUTO_TEST_CASE(triple_tensor_product) {
   D << 13., 14., 15., 16.;
 
   std::vector<Mat<double>> tensor{C, D};
-  std::vector<Mat<double>> rs = EC.triple_tensor_product(A, B, tensor);
+  Mat<double> rs = EC.triple_tensor_product(A, B, tensor);
 
-  BOOST_CHECK_EQUAL(rs[0].sum(), 2854.);
-  BOOST_CHECK_EQUAL(rs[1].sum(), 3894.);
+  BOOST_CHECK_EQUAL(rs.col(0).sum(), 2854.);
+  BOOST_CHECK_EQUAL(rs.col(1).sum(), 3894.);
 }
