@@ -25,11 +25,6 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 # Search for Cuda
 find_package(CUDA REQUIRED)
 
-# Search CXX options
-find_package(cxxopts REQUIRED
-  HINTS ${CONDA_PREFIX}/include
-)
-
 # search for Eigen
 find_package (Eigen3 3.3 REQUIRED CONFIG
   HINTS ${CONDA_PREFIX}/include

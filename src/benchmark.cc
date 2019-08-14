@@ -1,6 +1,5 @@
 #include "eigencuda.hpp"
 #include <chrono>
-#include <cxxopts.hpp>
 #include <fstream>
 #include <iostream>
 #include <vector>
@@ -13,7 +12,7 @@ void write_vector(std::vector<int> sizes,
   double x, y;
 
   file.open("times_benchmark.txt");
-  for (auto i = 0; i < vs.size(); i++) {
+  for (unsigned i = 0; i < vs.size(); i++) {
     std::tie(x, y) = vs[i];
     file << sizes[i] << " " << x << " " << y << "\n";
   }
@@ -158,22 +157,26 @@ void right_matrix_tensor() {
   std::cout << "right matrix product succeeded!\n";
 }
 
-int main(int argc, char *argv[]) {
+void test() {
+  Mat<double> A = Mat<double>::Ones(2,2);
+  Mat<double> B = Mat<double>::Zero(2,2);
 
-  // parse the input
-  cxxopts::Options options(argv[0], "gemm example using eigen");
-  options.positional_help("[optional args]").show_positional_help();
-  options.add_options()("pinned", "Whether to use pinned memory",
-                        cxxopts::value<bool>()->default_value("false"));
+  B << 2, 3, 4, 5;
+  
+  Mat<double> rs = eigencuda::stack<double>(std::vector<Mat<double>>{A, B});
+  std::cout << "result: " << rs << "\n";
 
-  auto result = options.parse(argc, argv);
-  bool pinned = result["pinned"].as<bool>();
+}
 
+int main() {
+
+  bool pinned = false;
   std::vector<int> vs{100, 200, 500, 1000, 1500, 2000};
 
-  run_benchmark(vs, pinned);
-  dot_product();
-  triple_product();
-  right_matrix_tensor();
+  // run_benchmark(vs, pinned);
+  // dot_product();
+  // triple_product();
+  // right_matrix_tensor();
+  test();
   return 0;
 }

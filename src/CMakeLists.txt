@@ -30,7 +30,6 @@ target_link_libraries(benchmark
   PRIVATE
     Eigen3::Eigen
     eigencuda
-    cxxopts::cxxopts
   )
 
 if(ENABLE_TESTING)

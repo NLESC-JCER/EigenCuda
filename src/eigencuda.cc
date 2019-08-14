@@ -266,7 +266,27 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &A,
   return rs;
 }
 
+/*
+* Stack a vector of matrices as a single matrix, where each row corresponds
+* to a matrix.
+*/  
+template<typename T>
+Mat<T> stack(std::vector<Mat<T>> tensor) {
+
+  int rows = tensor.size();  
+  int cols = tensor[0].size(); //size of each matrix
+
+  Mat<T> rs = Mat<T>::Zero(rows, cols);
+  
+  for (unsigned i=0; i<tensor.size(); i++){
+    rs.row(i) = Eigen::Map<const Eigen::Matrix<T, Eigen::Dynamic, 1>>(tensor[i].data(), tensor[i].size());
+  }
+  return rs;
+}
+
 // explicit instantiations
 template class EigenCuda<float>;
 template class EigenCuda<double>;
+template Mat<float> stack<float>(std::vector<Mat<float>>);
+template Mat<double> stack<double>(std::vector<Mat<double>>);
 } // namespace eigencuda
