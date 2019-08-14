@@ -135,8 +135,9 @@ void EigenCuda<T>::gemm(Shapes sh, std::tuple<int, int, int> ids) {
 }
 
 /*
- * Perform the matrix-matrix multiplication between A and B. First,
- * memory is allocated in the device for both matrices then a third temporal
+ * \brief Perform the matrix-matrix multiplication between A and B.
+ * \return result matrix.
+ * First, memory is allocated in the device for both matrices then a third temporal
  * array is allocated in the device that will contain the results. Finally, the
  * memory contains in the temporal result is copy back to the main memory and
  * Free the resources
@@ -171,21 +172,24 @@ Mat<T> EigenCuda<T>::dot(const Mat<T> &A, const Mat<T> &B) {
   return C;
 }
 /*
- * Initially, it allocates memory for matrices A, C and 3 temporal matrices:
- * matrix, X and Y. The last three matrices are not copy into the device
- * because is initial value is not relevant.
- * Subsequently, the method iterates over `tensor` and copy each submatrix
- * into the allocated `matrix` pointer then the following two operations are
- * perform:
- *     X = matrix * C
- *     Y = A * X
+ * \brief performs a matrix_1 * tensor * matrix_2 multiplication
+ * \return matrix where each column is the result of the matrices multiplication.
+ *
+ * Initially, it allocates memory and copy the matrices A and C together with
+ * the tensor to the device. Also, the function allocates the result tensor Y
+ * and a temporal matrix X.
+ * This last matrix is not copy into the device because is initial value is not relevant.
+ * Subsequently, the method iterates over each submatrix in `tensor` and
+ * perform the following operations:
+ *     X = tensor(i) * C
+ *     Y(i) = A * X
  * then the final Y is copy back to main memory.
- * Notice that matrices X, Y are never set to zero after each iteration because
+ * This final matrix Y contains in each column the result of the tensor operation.
+ * Also, notice that the matrix X is never set to zero after each iteration because
  * the gemm function perform the matrix multiplication:
  *  R = alpha M * N + beta R
  *  where alpha and beta are two scalar constants set to 1 and 0 respectively.
- * Therefore, X and Y are ALWAYS SET TO ZERO BEFORE THE MATRIX MULTIPLICATION.
- * RETURN a matrix where is column correspond to the result matrix
+ * Therefore, X is ALWAYS SET TO ZERO BEFORE THE MATRIX MULTIPLICATION.
  */
 
 template <typename T>
@@ -250,10 +254,13 @@ EigenCuda<T>::triple_tensor_product(const Mat<T> &A, const Mat<T> &C,
 }
 
 /*
- * Multiply a matrix A by a 3D tensor represented as a vector of matrices.
- * Each iteration perform the operation mtx * A,  where mtx is the ith component
- * of the tensor.
-  // Returns a matrix where each column represent the result product.
+ * \brief Multiply a matrix A by a 3D tensor represented as a vector of matrices.
+ * \return a matrix where each column represent the result product.
+ * Initially, it allocates memory and copy the matrices A and C together with
+ * the tensor to the device. Also, the function allocates the result tensor Y.
+ * The method iterates over each submatrix of the tensor computing:
+ * Y(i) = tensor(i) * A.
+ * Finally, the tensor Y is copy back to the main memory.
  */
 template <typename T>
 Mat<T> EigenCuda<T>::right_matrix_tensor(const Mat<T> &A,
