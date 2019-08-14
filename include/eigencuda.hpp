@@ -108,7 +108,7 @@ private:
 };
 
 // Stack a vector of matrices as a matrix where is row contains a matrix
-template <typename T> Mat<T> stack(std::vector<Mat<T>> tensor);
+template <typename T> Mat<T> stack(const std::vector<Mat<T>> &tensor);
 
 
 } // namespace eigencuda

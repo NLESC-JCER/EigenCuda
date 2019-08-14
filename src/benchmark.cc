@@ -173,10 +173,10 @@ int main() {
   bool pinned = false;
   std::vector<int> vs{100, 200, 500, 1000, 1500, 2000};
 
-  // run_benchmark(vs, pinned);
-  // dot_product();
-  // triple_product();
-  // right_matrix_tensor();
+  run_benchmark(vs, pinned);
+  dot_product();
+  triple_product();
+  right_matrix_tensor();
   test();
   return 0;
 }
