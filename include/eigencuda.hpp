@@ -101,7 +101,7 @@ private:
   // Cuda variables
   cublasHandle_t _handle;
   bool _pinned = false;
-  
+
   // Allocation booking
   int _counter = 0;
   std::unordered_map<int, T *> _allocated;
@@ -109,7 +109,6 @@ private:
 
 // Stack a vector of matrices as a matrix where is row contains a matrix
 template <typename T> Mat<T> stack(const std::vector<Mat<T>> &tensor);
-
 
 } // namespace eigencuda
 

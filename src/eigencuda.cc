@@ -3,23 +3,23 @@
 namespace eigencuda {
 
 /*
-* Stack a vector of matrices as a single matrix, where each row corresponds
-* to a matrix.
-*/  
-template<typename T>
-Mat<T> stack(const std::vector<Mat<T>> &tensor) {
+ * Stack a vector of matrices as a single matrix, where each row corresponds
+ * to a matrix.
+ */
+template <typename T> Mat<T> stack(const std::vector<Mat<T>> &tensor) {
 
-  int rows = tensor.size();  
-  int cols = tensor[0].size(); //size of each matrix
+  int rows = tensor.size();
+  int cols = tensor[0].size(); // size of each matrix
 
   Mat<T> rs = Mat<T>::Zero(rows, cols);
-  
-  for (unsigned i=0; i<tensor.size(); i++){
-    rs.row(i) = Eigen::Map<const Eigen::Matrix<T, Eigen::Dynamic, 1>>(tensor[i].data(), tensor[i].size());
+
+  for (unsigned i = 0; i < tensor.size(); i++) {
+    rs.row(i) = Eigen::Map<const Eigen::Matrix<T, Eigen::Dynamic, 1>>(
+        tensor[i].data(), tensor[i].size());
   }
   return rs;
-}  
-  
+}
+
 /*
  * Removed all the allocated arrays from the device
  */
@@ -234,7 +234,7 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &A,
                                   const std::vector<Mat<T>> &tensor) {
   // result vector
   std::vector<Mat<T>> rs(tensor.size());
-  
+
   // Copy Matrix A to the device
   int id_A = initialize_Matrix(A);
 
@@ -287,6 +287,6 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &A,
 // explicit instantiations
 template class EigenCuda<float>;
 template class EigenCuda<double>;
-template Mat<float> stack<float>(const std::vector<Mat<float>>&);
-template Mat<double> stack<double>(const std::vector<Mat<double>>&);
+template Mat<float> stack<float>(const std::vector<Mat<float>> &);
+template Mat<double> stack<double>(const std::vector<Mat<double>> &);
 } // namespace eigencuda
