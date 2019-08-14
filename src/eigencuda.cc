@@ -1,5 +1,4 @@
 #include "eigencuda.hpp"
-#include <iostream>
 
 namespace eigencuda {
 
@@ -252,10 +251,6 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &A,
   // Move tensor to the device
   int id_super = initialize_Matrix(super_matrix);
 
-  for (unsigned i=0; i < super_matrix.rows(); i++){
-    std::cout << "super matrix row:  " << i << " " << super_matrix.row(i) << "\n";
-  }
-  
   // rows and cols of matrices store in the tensor
   int mtx_rows = tensor[0].rows();
   int mtx_cols = tensor[0].cols();
