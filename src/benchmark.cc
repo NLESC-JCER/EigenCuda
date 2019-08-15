@@ -33,34 +33,34 @@ template <typename T> void dot_benchmark(Mat<T> &A, Mat<T> &B, bool pinned) {
   std::cout << "Run time: " << elapsed_time.count() << " secs\n";
 }
 
-// template <typename T>
-// std::tuple<double, double>
-// triple_product_benchmark(Mat<T> &A, Mat<T> &B, std::vector<Mat<T>> tensor) {
-//   // chrono
-//   std::chrono::time_point<std::chrono::system_clock> start, end;
+template <typename T>
+std::tuple<double, double>
+benchmark_right_matrix_tensor(Mat<T> &A, std::vector<Mat<T>> tensor) {
+  // chrono
+  std::chrono::time_point<std::chrono::system_clock> start, end;
 
-//   start = std::chrono::system_clock::now();
-//   eigencuda::EigenCuda<double> EC;
-//   std::vector<Mat<double>> rs = EC.triple_tensor_product(A, B, tensor);
-//   end = std::chrono::system_clock::now();
-//   std::chrono::duration<double> elapsed_time = end - start;
-//   auto gpu_time = elapsed_time.count();
-//   std::cout << "GPU triple tensor product: " << gpu_time << " secs\n";
+  start = std::chrono::system_clock::now();
+  eigencuda::EigenCuda<double> EC;
+  Mat<double> rs = EC.right_matrix_tensor(A, tensor);
+  end = std::chrono::system_clock::now();
+  std::chrono::duration<double> elapsed_time = end - start;
+  auto gpu_time = elapsed_time.count();
+  std::cout << "GPU triple tensor product: " << gpu_time << " secs\n";
 
-//   // Call Eigen
-//   start = std::chrono::system_clock::now();
-//   std::vector<Mat<double>> qs;
-//   for (const auto &x : tensor) {
-//     Mat<double> r = A * (x * B);
-//     qs.push_back(r);
-//   }
-//   end = std::chrono::system_clock::now();
-//   elapsed_time = end - start;
-//   auto cpu_time = elapsed_time.count();
-//   std::cout << "CPU triple tensor product: " << cpu_time << " secs\n";
+  // Call Eigen
+  start = std::chrono::system_clock::now();
+  std::vector<Mat<double>> qs;
+  for (const auto &x : tensor) {
+    Mat<double> r = x * A;
+    qs.push_back(r);
+  }
+  end = std::chrono::system_clock::now();
+  elapsed_time = end - start;
+  auto cpu_time = elapsed_time.count();
+  std::cout << "CPU triple tensor product: " << cpu_time << " secs\n";
 
-//   return std::make_tuple(gpu_time, cpu_time);
-// }
+  return std::make_tuple(gpu_time, cpu_time);
+}
 
 void run_benchmark(std::vector<int> vs, bool pinned = false) {
 
@@ -81,13 +81,13 @@ void run_benchmark(std::vector<int> vs, bool pinned = false) {
 
     dot_benchmark<double>(A, B, pinned);
 
-    // // Benchmark for triple product
-    // std::vector<Mat<double>> tensor;
-    // for (auto i = 0; i < 10; i++) {
-    //   tensor.push_back(Mat<double>::Random(size, size + 20));
-    // }
-    // std::cout << "Running triple product benchmark\n";
-    // times.push_back(triple_product_benchmark(A, C, tensor));
+    // Benchmark right tensor prodcut
+    std::vector<Mat<double>> tensor;
+    for (auto i = 0; i < 10; i++) {
+      tensor.push_back(Mat<double>::Random(size, size + 20));
+    }
+    std::cout << "Running right matrix tensor benchmark\n";
+    times.push_back(benchmark_right_matrix_tensor(C, tensor));
   }
   write_vector(vs, times);
 }
@@ -162,9 +162,9 @@ int main() {
   bool pinned = false;
   std::vector<int> vs{100, 200, 500, 1000, 1500, 2000};
 
-  // run_benchmark(vs, pinned);
   dot_product();
   triple_product();
   right_matrix_tensor();
+  run_benchmark(vs, pinned);
   return 0;
 }
