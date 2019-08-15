@@ -147,12 +147,13 @@ void right_matrix_tensor() {
   D << 13., 14., 15., 16., 17., 18.;
 
   std::vector<Mat<double>> tensor{B, C, D};
-  std::vector<Mat<double>> rs = eigencuda::to_vector(EC.right_matrix_tensor(A, tensor), 3, 3);
+  std::vector<Mat<double>> rs =
+      eigencuda::to_vector(EC.right_matrix_tensor(A, tensor), 3, 3);
 
-  for (auto &x: rs) {
+  for (auto &x : rs) {
     std::cout << "sum: " << x.sum() << "\n";
   }
-  
+
   // Check results
   assert(abs(rs[0].sum() - 486.) < 1e-8);
   assert(abs(rs[1].sum() - 738.) < 1e-8);
@@ -166,7 +167,7 @@ int main() {
   bool pinned = false;
   std::vector<int> vs{100, 200, 500, 1000, 1500, 2000};
 
-  right_matrix_tensor();  
+  right_matrix_tensor();
   dot_product();
   triple_product();
   run_benchmark(vs, pinned);

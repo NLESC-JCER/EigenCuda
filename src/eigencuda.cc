@@ -2,9 +2,9 @@
 
 namespace eigencuda {
 
-/* 
+/*
  * \return Vector of matrices extract from the columns of the tensor
- */  
+ */
 template <typename T>
 std::vector<Mat<T>> to_vector(Mat<T> &&tensor, int rows, int cols) {
   std::vector<Mat<T>> rs;
@@ -12,7 +12,7 @@ std::vector<Mat<T>> to_vector(Mat<T> &&tensor, int rows, int cols) {
     rs.push_back(Eigen::Map<Mat<T>>(tensor.col(i).data(), rows, cols));
   }
   return rs;
-}  
+}
 
 /*
  * Stack a vector of matrices as a single matrix, where each column corresponds
@@ -325,6 +325,6 @@ template class EigenCuda<double>;
 template Mat<float> stack<float>(const std::vector<Mat<float>> &);
 template Mat<double> stack<double>(const std::vector<Mat<double>> &);
 template std::vector<Mat<double>> to_vector(Mat<double> &&, int, int);
-template std::vector<Mat<float>> to_vector(Mat<float> &&, int, int);  
+template std::vector<Mat<float>> to_vector(Mat<float> &&, int, int);
 
 } // namespace eigencuda

@@ -119,7 +119,6 @@ template <typename T> Mat<T> stack(const std::vector<Mat<T>> &tensor);
 template <typename T>
 std::vector<Mat<T>> to_vector(Mat<T> &&tensor, int rows, int cols);
 
-  
 } // namespace eigencuda
 
 #endif // EIGENCUDA_H_
