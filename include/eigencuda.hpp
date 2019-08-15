@@ -76,7 +76,7 @@ public:
   // Perform the triple matrix multiplication A * matrix * C, for the vector
   // of matrices given by tensor. R
   Mat<T> triple_tensor_product(const Mat<T> &A, const Mat<T> &C,
-			       const std::vector<Mat<T>> &tensor);
+                               const std::vector<Mat<T>> &tensor);
 
   // Perform a multiplication between a matrix and a tensor.
   // Returns a matrix where each column represent the result product

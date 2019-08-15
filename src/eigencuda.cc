@@ -149,10 +149,10 @@ void EigenCuda<T>::gemm(Shapes sh, std::tuple<int, int, int> ids) {
 /*
  * \brief Perform the matrix-matrix multiplication between A and B.
  * \return result matrix.
- * First, memory is allocated in the device for both matrices then a third temporal
- * array is allocated in the device that will contain the results. Finally, the
- * memory contains in the temporal result is copy back to the main memory and
- * Free the resources
+ * First, memory is allocated in the device for both matrices then a third
+ * temporal array is allocated in the device that will contain the results.
+ * Finally, the memory contains in the temporal result is copy back to the main
+ * memory and Free the resources
  */
 template <typename T>
 Mat<T> EigenCuda<T>::dot(const Mat<T> &A, const Mat<T> &B) {
@@ -185,29 +185,26 @@ Mat<T> EigenCuda<T>::dot(const Mat<T> &A, const Mat<T> &B) {
 }
 /*
  * \brief performs a matrix_1 * tensor * matrix_2 multiplication
- * \return matrix where each column is the result of the matrices multiplication.
+ * \return matrix where each column is the result of the matrices
+ * multiplication.
  *
  * Initially, it allocates memory and copy the matrices A and C together with
  * the tensor to the device. Also, the function allocates the result tensor Y
  * and a temporal matrix X.
- * This last matrix is not copy into the device because is initial value is not relevant.
- * Subsequently, the method iterates over each submatrix in `tensor` and
- * perform the following operations:
- *     X = tensor(i) * C
- *     Y(i) = A * X
- * then the final Y is copy back to main memory.
- * This final matrix Y contains in each column the result of the tensor operation.
- * Also, notice that the matrix X is never set to zero after each iteration because
- * the gemm function perform the matrix multiplication:
- *  R = alpha M * N + beta R
- *  where alpha and beta are two scalar constants set to 1 and 0 respectively.
- * Therefore, X is ALWAYS SET TO ZERO BEFORE THE MATRIX MULTIPLICATION.
+ * This last matrix is not copy into the device because is initial value is not
+ * relevant. Subsequently, the method iterates over each submatrix in `tensor`
+ * and perform the following operations: X = tensor(i) * C Y(i) = A * X then the
+ * final Y is copy back to main memory. This final matrix Y contains in each
+ * column the result of the tensor operation. Also, notice that the matrix X is
+ * never set to zero after each iteration because the gemm function perform the
+ * matrix multiplication: R = alpha M * N + beta R where alpha and beta are two
+ * scalar constants set to 1 and 0 respectively. Therefore, X is ALWAYS SET TO
+ * ZERO BEFORE THE MATRIX MULTIPLICATION.
  */
 
 template <typename T>
-Mat<T>
-EigenCuda<T>::triple_tensor_product(const Mat<T> &A, const Mat<T> &C,
-                                    const std::vector<Mat<T>> &tensor) {
+Mat<T> EigenCuda<T>::triple_tensor_product(const Mat<T> &A, const Mat<T> &C,
+                                           const std::vector<Mat<T>> &tensor) {
   // Copy Matrix A and B to the device
   int id_A = initialize_Matrix(A);
   int id_C = initialize_Matrix(C);
@@ -230,14 +227,13 @@ EigenCuda<T>::triple_tensor_product(const Mat<T> &A, const Mat<T> &C,
   // allocate space in device for the temporal matrices
   Mat<T> X = Mat<T>::Zero(A.cols(), C.cols());
   int id_X = initialize_Matrix(X, false);
-  
+
   // Iterate over the tensor Using the previous allocated space in the device
   for (unsigned i = 0; i < tensor.size(); i++) {
 
     // Compute first matrix multiplication
     Shapes sh1{mtx_rows, mtx_cols, C.rows(), C.cols(), X.rows()};
-    std::tuple<int, int, int> ids =
-      std::make_tuple(id_super, id_C, id_X);
+    std::tuple<int, int, int> ids = std::make_tuple(id_super, id_C, id_X);
     gemm(sh1, ids);
 
     // compute the second matrix multiplication
@@ -248,15 +244,15 @@ EigenCuda<T>::triple_tensor_product(const Mat<T> &A, const Mat<T> &C,
     // shift the pointer containing the super_matrix and the result tensor
     std::vector<int> pointers{id_super, id_Y};
     std::vector<long int> shifts{mtx_rows * mtx_cols, mtx_rows * C.cols()};
-    shift_pointers_by(pointers, shifts);    
+    shift_pointers_by(pointers, shifts);
   }
 
   // send data back to CPU
   T *hY = Y.data();
   size_t size_Y = Y.size() * sizeof(T);
   cudaMemcpy(hY, init_Y, size_Y, cudaMemcpyDeviceToHost);
-  Y = Eigen::Map<Mat<T>>(hY, Y.rows(), Y.cols());  
-  
+  Y = Eigen::Map<Mat<T>>(hY, Y.rows(), Y.cols());
+
   // Free all the allocated arrays from the device
   for (int x : {id_A, id_C, id_X, id_Y, id_super}) {
     free_matrix(x);
@@ -266,8 +262,8 @@ EigenCuda<T>::triple_tensor_product(const Mat<T> &A, const Mat<T> &C,
 }
 
 /*
- * \brief Multiply a matrix A by a 3D tensor represented as a vector of matrices.
- * \return a matrix where each column represent the result product.
+ * \brief Multiply a matrix A by a 3D tensor represented as a vector of
+ * matrices. \return a matrix where each column represent the result product.
  * Initially, it allocates memory and copy the matrices A and C together with
  * the tensor to the device. Also, the function allocates the result tensor Y.
  * The method iterates over each submatrix of the tensor computing:
