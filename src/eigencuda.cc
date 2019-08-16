@@ -310,7 +310,7 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
   // Get the pointers to the input
   const T *dA[batchCount];
   for (auto i = 0; i < batchCount; i++) {
-    dA[i] = _allocated.at(i);
+    dA[i] = _allocated.at(ids_tensor.at(i));
   }
 
   // represent the matrix B as a tensor where all the submatrices are the same
@@ -329,7 +329,7 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
   // Get the pointers to the output
   T *dC[batchCount];
   for (auto i = 0; i < batchCount; i++) {
-    dC[i] = _allocated.at(i);
+    dC[i] = _allocated.at(ids_outputs.at(i));
   }
 
   // Call tensor matrix multiplication
