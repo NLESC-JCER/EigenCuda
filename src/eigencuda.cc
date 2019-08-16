@@ -90,14 +90,15 @@ int EigenCuda<T>::initialize_Matrix(const Mat<T> &A, bool copy_to_device) {
 
   return id;
 }
+
 /*
- * Call the gemm function from cublas, resulting in the multiplication of the
- * two matrices with identifiers id_A and id_B. The result is stored in
- * a Matrix (pointer) with identifier id_C.
+ * Retrieve the pointers to the allocated memory in the device using
+ * their correspoding ids.
  */
 template <typename T>
-void EigenCuda<T>::gemm(Shapes sh, std::tuple<int, int, int> ids) {
-  // Invoke the gemm subroutine from cublas
+std::tuple<T*, T*, T*>
+EigenCuda<T>::get_pointer_from_ids(std::tuple<int, int, int> ids){
+  // identifiers of the pointers
   int id_A, id_B, id_C;
   std::tie(id_A, id_B, id_C) = ids;
 
@@ -106,6 +107,20 @@ void EigenCuda<T>::gemm(Shapes sh, std::tuple<int, int, int> ids) {
   dA = _allocated.at(id_A);
   dB = _allocated.at(id_B);
   dC = _allocated.at(id_C);
+
+  return std::forward_as_tuple(dA, dB, dC);
+  }
+  
+/*
+ * Call the gemm function from cublas, resulting in the multiplication of the
+ * two matrices with identifiers id_A and id_B. The result is stored in
+ * a Matrix (pointer) with identifier id_C.
+ */
+template <typename T>
+void EigenCuda<T>::gemm(Shapes sh, std::tuple<int, int, int> ids) {
+  // get pointers to the device
+  T *dA, *dB, *dC;
+  std::tie(dA, dB, dC) = get_pointer_from_ids(ids);
 
   // Scalar constanst for calling blas
   T _alpha = 1.;
@@ -125,6 +140,40 @@ void EigenCuda<T>::gemm(Shapes sh, std::tuple<int, int, int> ids) {
   }
 }
 
+/*
+ * Call the gemmStridedBatched function from cublas, resembling a zip
+ * operation of two 3D tensors, applying the gemm function in each pair
+ * of matrices. Resulting in a 3D tensor containing the results of the
+ * multiplication.
+ */
+template <typename T>
+void EigenCuda<T>::gemmStridedBatched(Shapes sh, std::tuple<int, int, int> strides,
+				     std::tuple<int, int, int> ids, int batchCount) {
+  // pointers from ids
+  T *dA, *dB, *dC;
+  std::tie(dA, dB, dC) = get_pointer_from_ids(ids);
+
+  // strides
+  int sa, sb, sc;
+  std::tie(sa, sb, sc) = strides;
+  
+  // Scalar constanst for calling blas
+  T _alpha = 1.;
+  T _beta = 0.;
+  const T *_pa = &_alpha;
+  const T *_pb = &_beta;
+
+  // call gemm from cublas
+  if constexpr (std::is_same<float, T>()) {
+    cublasSgemmStridedBatched(_handle, CUBLAS_OP_N, CUBLAS_OP_N, sh.A_rows, sh.B_cols,
+			      sh.A_cols, _pa, dA, sh.A_rows, sa, dB, sh.B_rows, sb, _pb, dC,
+			      sh.C_rows, sc, batchCount);
+  } else if (std::is_same<double, T>()) {
+    cublasDgemmStridedBatched(_handle, CUBLAS_OP_N, CUBLAS_OP_N, sh.A_rows, sh.B_cols,
+			      sh.A_cols, _pa, dA, sh.A_rows, sa, dB, sh.B_rows, sb, _pb, dC,
+			      sh.C_rows, sc, batchCount);
+}
+}  
 /*
  * Perform the matrix-matrix multiplication between A and B. First,
  * memory is allocated in the device for both matrices then a third temporal
