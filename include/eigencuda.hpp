@@ -60,8 +60,10 @@ using Mat = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
 template <typename T> class EigenCuda {
 
 public:
-  EigenCuda() { cublasCreate(&_handle); }
-  EigenCuda(bool pinned) : _pinned{pinned} { cublasCreate(&_handle); }
+  EigenCuda() { cublasCreate(&_handle);
+    _err_stream = cudaStreamCreate(&_stream);}
+  EigenCuda(bool pinned) : _pinned{pinned} {
+    cublasCreate(&_handle); _err_stream = cudaStreamCreate(&_stream);}
 
   // Deallocate both the handler and allocated arrays
   ~EigenCuda();
@@ -102,9 +104,14 @@ private:
   cublasHandle_t _handle;
   bool _pinned = false;
 
+  // Asynchronous stream
+  cudaStream_t _stream;
+  cudaError_t _err_stream;
+
   // Allocation booking
   int _counter = 0;
   std::unordered_map<int, T *> _allocated;
+
 };
 
 // Stack a vector of matrices as a matrix where is row contains a matrix

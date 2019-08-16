@@ -24,7 +24,11 @@ template <typename T> Mat<T> stack(const std::vector<Mat<T>> &tensor) {
  * Removed all the allocated arrays from the device
  */
 template <typename T> EigenCuda<T>::~EigenCuda() {
+  // destroy handle
   cublasDestroy(_handle);
+  // destroy stream
+  cudaStreamDestroy(_stream);
+  // deallocated remaining memory
   for (auto &p : _allocated)
     this->gpu_free(p.second);
 }
@@ -81,7 +85,7 @@ int EigenCuda<T>::initialize_Matrix(const Mat<T> &A, bool copy_to_device) {
   if (copy_to_device) {
     // Pointers at the host
     const T *hA = A.data();
-    cudaMemcpy(dA, hA, size_A, cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(dA, hA, size_A, cudaMemcpyHostToDevice,_stream);
   }
 
   return id;
@@ -193,7 +197,7 @@ EigenCuda<T>::triple_tensor_product(const Mat<T> &A, const Mat<T> &C,
 
               // move temporal matrix to the preallocated space
               std::size_t size_mtx = mtx.size() * sizeof(T);
-              cudaMemcpy(d_matrix, h_mtx, size_mtx, cudaMemcpyHostToDevice);
+              cudaMemcpyAsync(d_matrix, h_mtx, size_mtx, cudaMemcpyHostToDevice, _stream);
 
               // Compute first matrix multiplication
               Shapes sh1{mtx.rows(), mtx.cols(), C.rows(), C.cols(), X.rows()};
@@ -209,7 +213,7 @@ EigenCuda<T>::triple_tensor_product(const Mat<T> &A, const Mat<T> &C,
               // send data back to CPU
               T *hY = Y.data();
               T *dY = this->_allocated[id_Y];
-              cudaMemcpy(hY, dY, size_Y, cudaMemcpyDeviceToHost);
+              cudaMemcpyAsync(hY, dY, size_Y, cudaMemcpyDeviceToHost, _stream);
               Y = Eigen::Map<Mat<T>>(hY, A.rows(), C.cols());
 
               return Y;
@@ -259,7 +263,7 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &A,
 
               // move temporal matrix to the preallocated space
               std::size_t size_mtx = mtx.size() * sizeof(T);
-              cudaMemcpy(d_matrix, h_mtx, size_mtx, cudaMemcpyHostToDevice);
+	      cudaMemcpyAsync(d_matrix, h_mtx, size_mtx, cudaMemcpyHostToDevice, _stream);
 
               // Compute the matrix multiplication
               Shapes sh1{mtx.rows(), mtx.cols(), A.rows(), A.cols(), Y.rows()};
@@ -270,7 +274,7 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &A,
               // send data back to CPU
               T *hY = Y.data();
               T *dY = this->_allocated[id_Y];
-              cudaMemcpy(hY, dY, size_Y, cudaMemcpyDeviceToHost);
+              cudaMemcpyAsync(hY, dY, size_Y, cudaMemcpyDeviceToHost, _stream);
               Y = Eigen::Map<Mat<T>>(hY, mtx.rows(), A.cols());
 
               return Y;
