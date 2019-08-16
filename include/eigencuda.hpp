@@ -52,7 +52,7 @@ struct Shapes {
         B_rows{static_cast<int>(_b_rows)}, B_cols{static_cast<int>(_b_cols)},
         C_rows{static_cast<int>(_c_rows)} {}
 };
-
+  
 // col Major for CUDA
 template <typename T>
 using Mat = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
@@ -101,10 +101,7 @@ private:
   void gemm(Shapes shapes, std::tuple<int, int, int> ids);
 
   // Invoke the ?gemmStidedBatched function of CuBlas.
-  void gemmStridedBatched(Shapes shapes,
-			  std::tuple<int, int, int> strides,
-			  std::tuple<int, int, int> ids,
-			  int batchCount);
+  void gemmBatched(Shapes sh, const T *dA[], T const *dB[], T *dC[], int batchCount);
 
   // Deallocate Matrix identifier `id` from the device
   void free_matrix(int id);
