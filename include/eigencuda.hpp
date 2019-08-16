@@ -52,7 +52,7 @@ struct Shapes {
         B_rows{static_cast<int>(_b_rows)}, B_cols{static_cast<int>(_b_cols)},
         C_rows{static_cast<int>(_c_rows)} {}
 };
-  
+
 // col Major for CUDA
 template <typename T>
 using Mat = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
@@ -60,10 +60,14 @@ using Mat = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
 template <typename T> class EigenCuda {
 
 public:
-  EigenCuda() { cublasCreate(&_handle);
-    _err_stream = cudaStreamCreate(&_stream);}
+  EigenCuda() {
+    cublasCreate(&_handle);
+    _err_stream = cudaStreamCreate(&_stream);
+  }
   EigenCuda(bool pinned) : _pinned{pinned} {
-    cublasCreate(&_handle); _err_stream = cudaStreamCreate(&_stream);}
+    cublasCreate(&_handle);
+    _err_stream = cudaStreamCreate(&_stream);
+  }
 
   // Deallocate both the handler and allocated arrays
   ~EigenCuda();
@@ -91,25 +95,25 @@ private:
   // Deallocate memory from the device
   void gpu_free(T *x) const;
 
-  
   // Allocate memory in the device, optionally copying the array to the GPU
   int initialize_Matrix(const Mat<T> &A, bool copy_to_device = true);
 
   // get pointers from allocated memory using their ids
-  std::tuple<T*, T*, T*> get_pointer_from_ids(std::tuple<int, int, int> ids);
-  
+  std::tuple<T *, T *, T *> get_pointer_from_ids(std::tuple<int, int, int> ids);
+
   // Invoke the ?gemm function of cublas
   void gemm(Shapes shapes, std::tuple<int, int, int> ids);
 
   // Invoke the ?gemmStidedBatched function of CuBlas.
-  void gemmBatched(Shapes sh, const T *dA[], T const *dB[], T *dC[], int batchCount);
+  void gemmBatched(Shapes sh, const T *dA[], T const *dB[], T *dC[],
+                   int batchCount);
 
   // Deallocate Matrix identifier `id` from the device
   void free_matrix(int id);
 
   // Deallocate tensor of matrices
   void free_tensor(std::vector<int> ids_tensor);
-  
+
   // Cuda variables
   cublasHandle_t _handle;
   bool _pinned = false;
@@ -121,7 +125,6 @@ private:
   // Allocation booking
   int _counter = 0;
   std::unordered_map<int, T *> _allocated;
-
 };
 
 // Stack a vector of matrices as a matrix where is row contains a matrix

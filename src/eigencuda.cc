@@ -62,13 +62,13 @@ template <typename T> void EigenCuda<T>::free_matrix(int id) {
  * Deallocate the memory associated with a set of matrices identified
  * by a vector of ints.
  */
-template <typename T>  
-void EigenCuda<T>::free_tensor(std::vector<int> ids_tensor){
-    for (const auto &id: ids_tensor){
-      free_matrix(id);
-    }
+template <typename T>
+void EigenCuda<T>::free_tensor(std::vector<int> ids_tensor) {
+  for (const auto &id : ids_tensor) {
+    free_matrix(id);
   }
-  
+}
+
 /*
  * Allocate memory in the device for matrix A, then if if `copy_to_device`
  * copy the array to the device. Sometimes it only neccesary to allocate
@@ -96,7 +96,7 @@ int EigenCuda<T>::initialize_Matrix(const Mat<T> &A, bool copy_to_device) {
   if (copy_to_device) {
     // Pointers at the host
     const T *hA = A.data();
-    cudaMemcpyAsync(dA, hA, size_A, cudaMemcpyHostToDevice,_stream);
+    cudaMemcpyAsync(dA, hA, size_A, cudaMemcpyHostToDevice, _stream);
   }
 
   return id;
@@ -107,8 +107,8 @@ int EigenCuda<T>::initialize_Matrix(const Mat<T> &A, bool copy_to_device) {
  * their correspoding ids.
  */
 template <typename T>
-std::tuple<T*, T*, T*>
-EigenCuda<T>::get_pointer_from_ids(std::tuple<int, int, int> ids){
+std::tuple<T *, T *, T *>
+EigenCuda<T>::get_pointer_from_ids(std::tuple<int, int, int> ids) {
   // identifiers of the pointers
   int id_A, id_B, id_C;
   std::tie(id_A, id_B, id_C) = ids;
@@ -120,8 +120,8 @@ EigenCuda<T>::get_pointer_from_ids(std::tuple<int, int, int> ids){
   dC = _allocated.at(id_C);
 
   return std::forward_as_tuple(dA, dB, dC);
-  }
-  
+}
+
 /*
  * Call the gemm function from cublas, resulting in the multiplication of the
  * two matrices with identifiers id_A and id_B. The result is stored in
@@ -158,25 +158,26 @@ void EigenCuda<T>::gemm(Shapes sh, std::tuple<int, int, int> ids) {
  * multiplication.
  */
 template <typename T>
-void EigenCuda<T>::gemmBatched(Shapes sh, const T *dA[],  const T *dB[], T *dC[], int batchCount) {
-  
+void EigenCuda<T>::gemmBatched(Shapes sh, const T *dA[], const T *dB[], T *dC[],
+                               int batchCount) {
+
   // Scalar constanst for calling blas
   T _alpha = 1.;
   T _beta = 0.;
   const T *_pa = &_alpha;
   const T *_pb = &_beta;
-  
+
   // call gemm from cublas
   if constexpr (std::is_same<float, T>()) {
     cublasSgemmBatched(_handle, CUBLAS_OP_N, CUBLAS_OP_N, sh.A_rows, sh.B_cols,
-		       sh.A_cols, _pa, dA, sh.A_rows, dB, sh.B_rows, _pb, dC,
-		       sh.C_rows, batchCount);
-    } else if (std::is_same<double, T>()) {
+                       sh.A_cols, _pa, dA, sh.A_rows, dB, sh.B_rows, _pb, dC,
+                       sh.C_rows, batchCount);
+  } else if (std::is_same<double, T>()) {
     cublasDgemmBatched(_handle, CUBLAS_OP_N, CUBLAS_OP_N, sh.A_rows, sh.B_cols,
-		       sh.A_cols, _pa, dA, sh.A_rows, dB, sh.B_rows, _pb, dC,
-		       sh.C_rows, batchCount);
+                       sh.A_cols, _pa, dA, sh.A_rows, dB, sh.B_rows, _pb, dC,
+                       sh.C_rows, batchCount);
+  }
 }
-}  
 /*
  * Perform the matrix-matrix multiplication between A and B. First,
  * memory is allocated in the device for both matrices then a third temporal
@@ -249,7 +250,8 @@ EigenCuda<T>::triple_tensor_product(const Mat<T> &A, const Mat<T> &C,
 
               // move temporal matrix to the preallocated space
               std::size_t size_mtx = mtx.size() * sizeof(T);
-              cudaMemcpyAsync(d_matrix, h_mtx, size_mtx, cudaMemcpyHostToDevice, _stream);
+              cudaMemcpyAsync(d_matrix, h_mtx, size_mtx, cudaMemcpyHostToDevice,
+                              _stream);
 
               // Compute first matrix multiplication
               Shapes sh1{mtx.rows(), mtx.cols(), C.rows(), C.cols(), X.rows()};
@@ -290,7 +292,7 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
                                   const std::vector<Mat<T>> &tensor) {
   // Number of submatrices in the input tensor
   int batchCount = tensor.size();
-  
+
   // Copy Matrix B to the device
   int id_B = initialize_Matrix(B);
 
@@ -301,46 +303,45 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
 
   // Allocate space and copy to the device for the input tensor
   std::vector<int> ids_tensor;
-  for (const auto &mtx: tensor) {
+  for (const auto &mtx : tensor) {
     ids_tensor.push_back(initialize_Matrix(mtx));
   }
 
   // Get the pointers to the input
   const T *dA[batchCount];
-  for (auto i=0; i < batchCount; i++){
+  for (auto i = 0; i < batchCount; i++) {
     dA[i] = _allocated.at(i);
   }
 
   // represent the matrix B as a tensor where all the submatrices are the same
   const T *dB[batchCount];
-  for (auto i=0; i < batchCount; i++){
+  for (auto i = 0; i < batchCount; i++) {
     dB[i] = _allocated.at(id_B);
   }
 
   // Allocate space in the device for the output tensor
   std::vector<int> ids_outputs;
   Mat<T> output = Mat<T>::Zero(matrix.rows(), B.cols());
-  for (auto i=0; i < batchCount; i++) {
+  for (auto i = 0; i < batchCount; i++) {
     ids_outputs.push_back(initialize_Matrix(output, false));
   }
 
   // Get the pointers to the output
   T *dC[batchCount];
-  for (auto i=0; i < batchCount; i++){
+  for (auto i = 0; i < batchCount; i++) {
     dC[i] = _allocated.at(i);
   }
-
 
   // Call tensor matrix multiplication
   Shapes sh{matrix.rows(), matrix.cols(), B.rows(), B.cols(), matrix.rows()};
   gemmBatched(sh, dA, dB, dC, batchCount);
-  
+
   // Vector containing the results
   std::vector<Mat<T>> rs(batchCount, Mat<T>::Zero(matrix.rows(), B.cols()));
   size_t size_out = output.size() * sizeof(T);
-  
-  // Copy the results back to the device  
-  for (auto i=0; i < batchCount; i++) {
+
+  // Copy the results back to the device
+  for (auto i = 0; i < batchCount; i++) {
     T *hout = rs[i].data();
     T *dout = _allocated.at(ids_outputs[i]);
     cudaMemcpyAsync(hout, dout, size_out, cudaMemcpyDeviceToHost, _stream);
@@ -351,7 +352,7 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
   free_matrix(id_B);
   free_tensor(ids_tensor);
   free_tensor(ids_outputs);
-  
+
   return rs;
 }
 
