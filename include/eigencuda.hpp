@@ -38,6 +38,13 @@ inline cudaError_t checkCuda(cudaError_t result) {
   return result;
 }
 
+// Strides to batch gemm
+struct Strides {
+  long long int stA;
+  long long int stB;
+  long long int stC; 
+};
+  
 // Structure with the sizes to call ?GEMM
 struct Shapes {
   int A_rows;
@@ -101,10 +108,13 @@ private:
   // Invoke the ?gemm function of cublas
   void gemm(Shapes shapes, const T *dA, const T *dB, T *dC);
 
-  // Invoke the ?gemmStidedBatched function of CuBlas.
+  // Invoke the ?gemmBatched function of CuBlas.
   void gemmBatched(Shapes sh, const T **dA, const T **dB, T **dC,
                    int batchCount);
 
+  // Invoke the ?gemmStridedBatched function of CuBlas
+  void gemmStridedBatched(Shapes sh, Strides strides, const T *dA, const T *dB, T *dC);
+  
   // Cuda variables
   cublasHandle_t _handle;
   bool _pinned = false;
