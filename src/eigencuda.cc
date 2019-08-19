@@ -3,24 +3,6 @@
 namespace eigencuda {
 
 /*
- * Stack a vector of matrices as a single matrix, where each row corresponds
- * to a matrix.
- */
-template <typename T> Mat<T> stack(const std::vector<Mat<T>> &tensor) {
-
-  int rows = tensor.size();
-  int cols = tensor[0].size(); // size of each matrix
-
-  Mat<T> rs = Mat<T>::Zero(rows, cols);
-
-  for (unsigned i = 0; i < tensor.size(); i++) {
-    rs.row(i) = Eigen::Map<const Eigen::Matrix<T, Eigen::Dynamic, 1>>(
-        tensor[i].data(), tensor[i].size());
-  }
-  return rs;
-}
-
-/*
  * Removed all the allocated arrays from the device
  */
 template <typename T> EigenCuda<T>::~EigenCuda() {
@@ -42,7 +24,7 @@ template <typename T> EigenCuda<T>::~EigenCuda() {
 template <typename T> void EigenCuda<T>::gpu_alloc(T **x, std::size_t n) const {
   (_pinned) ? cudaMallocHost(x, n) : cudaMalloc(x, n);
 }
-
+  
 /*
  * Deallocate memory from the device
  */
@@ -357,7 +339,7 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
   cudaMalloc(&dA, size_batch);
   cudaMalloc(&dB, size_batch);  
   cudaMalloc(&dC, size_batch);
-
+  
   // Copy the arrays of pointers from host to the device
   cudaMemcpy(dA, hA, size_batch, cudaMemcpyHostToDevice);
   cudaMemcpy(dB, hB, size_batch, cudaMemcpyHostToDevice);
@@ -398,6 +380,4 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
 // explicit instantiations
 template class EigenCuda<float>;
 template class EigenCuda<double>;
-template Mat<float> stack<float>(const std::vector<Mat<float>> &);
-template Mat<double> stack<double>(const std::vector<Mat<double>> &);
 } // namespace eigencuda

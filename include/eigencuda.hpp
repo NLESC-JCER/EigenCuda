@@ -91,7 +91,7 @@ public:
 private:
   // Allocate memory in the device
   void gpu_alloc(T **x, std::size_t n) const;
-
+  
   // Deallocate memory from the device
   void gpu_free(T *x) const;
 
@@ -130,10 +130,6 @@ private:
   int _counter = 0;
   std::unordered_map<int, T *> _allocated;
 };
-
-// Stack a vector of matrices as a matrix where is row contains a matrix
-template <typename T> Mat<T> stack(const std::vector<Mat<T>> &tensor);
-
 } // namespace eigencuda
 
 #endif // EIGENCUDA_H_

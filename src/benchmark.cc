@@ -161,16 +161,6 @@ void right_matrix_tensor() {
   std::cout << "right matrix product succeeded!\n";
 }
 
-void test() {
-  Mat<double> A = Mat<double>::Ones(2, 2);
-  Mat<double> B = Mat<double>::Zero(2, 2);
-
-  B << 2, 3, 4, 5;
-
-  Mat<double> rs = eigencuda::stack<double>(std::vector<Mat<double>>{A, B});
-  std::cout << "result: " << rs << "\n";
-}
-
 int main() {
 
   bool pinned = false;
@@ -180,6 +170,5 @@ int main() {
   // dot_product();
   // triple_product();
   right_matrix_tensor();
-  // test();
   return 0;
 }
