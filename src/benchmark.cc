@@ -146,7 +146,7 @@ void right_matrix_tensor() {
   C << 9., 10., 11., 12., 13., 14.;
   D << 13., 14., 15., 16., 17., 18.;
 
-  std::vector<Mat<double>> tensor{B};
+  std::vector<Mat<double>> tensor{B, C, D};
   std::vector<Mat<double>> rs = EC.right_matrix_tensor(A, tensor);
 
   // Check results

@@ -109,7 +109,7 @@ private:
   void gemm(Shapes shapes, std::tuple<int, int, int> ids);
 
   // Invoke the ?gemmStidedBatched function of CuBlas.
-  void gemmBatched(Shapes sh, T **dA, T **dB, T **dC,
+  void gemmBatched(Shapes sh, const T **dA, const T **dB, T **dC,
 		   int batchCount);
 
   // Deallocate Matrix identifier `id` from the device
