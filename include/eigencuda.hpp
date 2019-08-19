@@ -94,7 +94,7 @@ private:
   
   // Deallocate memory from the device
   void gpu_free(T *x) const;
-
+  
   // Allocate memory in the device, optionally copying the array to the GPU
   T *initialize_matrix_mem(const Mat<T> &A, bool copy_to_device = true);
  

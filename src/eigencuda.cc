@@ -135,10 +135,10 @@ Mat<T> EigenCuda<T>::dot(const Mat<T> &A, const Mat<T> &B) {
   // Indices of the matrices on the device
   T* dA = initialize_matrix_mem(A);
   T* dB = initialize_matrix_mem(B);
-  T* dC = initialize_matrix_mem(C);
+  T* dC = initialize_matrix_mem(C, false);
   
   // process on GPU
-  Shapes sh{A.rows(), A.cols(), B.rows(), B.cols(), C.cols()};
+  Shapes sh{A.rows(), A.cols(), B.rows(), B.cols(), C.rows()};
   gemm(sh, dA, dB, dC);
 
   // send data back to CPU
@@ -174,16 +174,84 @@ Mat<T> EigenCuda<T>::dot(const Mat<T> &A, const Mat<T> &B) {
  * scalar constants set to 1 and 0 respectively. Therefore, X is ALWAYS SET TO
  * ZERO BEFORE THE MATRIX MULTIPLICATION.
  */  
-template <typename T>
-std::vector<Mat<T>>
-EigenCuda<T>::triple_tensor_product(const Mat<T> &A, const Mat<T> &C,
-                                    const std::vector<Mat<T>> &tensor) {
-  // // Number of submatrices in the input tensor
-  // int batchCount = tensor.size();
-  std::vector<Mat<T>> rs;
+// template <typename T>
+// std::vector<Mat<T>>
+// EigenCuda<T>::triple_tensor_product(const Mat<T> &A, const Mat<T> &C,
+//                                     const std::vector<Mat<T>> &tensor) {
+//   // Number of submatrices in the input tensor
+//   int batchCount = tensor.size();
 
-  return rs;
-}
+//   // Copy Matrix A and C to the device
+//   T *mtxA = initialize_matrix_mem(A);
+//   T *mtxC = initialize_matrix_mem(C);
+
+//   // allocate space in device for the tensor
+//   int rows = tensor[0].rows(); // rows of the submatrices
+//   int cols = tensor[0].cols(); // cols of the submatrices
+//   Mat<T> matrix = Mat<T>::Zero(rows, cols);
+
+//   // Allocate space and copy to the device the input tensor
+//   // Notice that hA, hB and hC are arrays IN THE HOST by the pointers
+//   // are allocated in the DEVICE.
+//   T *hA[batchCount];
+//   for (auto i = 0; i < batchCount; i++) {
+//     hA[i] = mtxA; // Use the same pointer
+//   }
+
+//   // This array contains the pointers to the allocated space for the tensor
+//   T *hB[batchCount];
+//   for (auto i = 0; i < batchCount; i++) {
+//     hB[i] = initialize_matrix_mem(tensor[i]);
+//   }
+
+//   // Use an array of pointers to the same matrix allocated in the device
+//   T *hC[batchCount];
+//   for (auto i = 0; i < batchCount; i++) {
+//     hC[i] = mtxC;
+//   }
+
+//   // Allocated space for the temporal matrix
+//   // matrix containing the product tensor(i) * C
+//   Mat<T> X = Mat<T>::Zero(matrix.rows(), C.cols());
+//   T *hX[batchCount];
+//   for (auto i = 0; i < batchCount; i++) {
+//     hX[i] = initialize_matrix_mem(X, false);
+//   }
+//   Mat<T> Y = Mat<T>::Zero(A.rows(), C.cols());
+//   T *hY[batchCount];
+//   for (auto i = 0; i < batchCount; i++) {
+//     hY[i] = initialize_matrix_mem(Y, false);
+//   }
+
+//   // Allocate space in the device for the array of pointers
+//   const T **dA, **dB, **dC, **dZ;
+//   T **dX, **dY;
+//   size_t size_batch = batchCount * sizeof(T*);
+//   cudaMalloc(&dA, size_batch);
+//   cudaMalloc(&dB, size_batch);  
+//   cudaMalloc(&dC, size_batch);
+//   cudaMalloc(&dX, size_batch);
+//   cudaMalloc(&dY, size_batch);
+  
+//   // Copy the arrays of pointers from host to the device
+//   cudaMemcpy(dA, hA, size_batch, cudaMemcpyHostToDevice);
+//   cudaMemcpy(dB, hB, size_batch, cudaMemcpyHostToDevice);
+//   cudaMemcpy(dC, hC, size_batch, cudaMemcpyHostToDevice);
+//   cudaMemcpy(dX, hX, size_batch, cudaMemcpyHostToDevice);
+//   cudaMemcpy(dY, hY, size_batch, cudaMemcpyHostToDevice);
+  
+//   // First tensor matrix multiplication
+//   Shapes sh{matrix.rows(), matrix.cols(), C.rows(), C.cols(), matrix.rows()};
+//   gemmBatched(sh, dB, dC, dX, batchCount);
+
+//   // Seconds tensor matrix multiplication
+//   sh = Shapes{A.rows(), A.cols(), X.rows(), X.cols(), A.rows()};
+//   gemmBatched(sh, dA, dX, dY, batchCount);
+
+//   std::vector<Mat<T>> rs;
+  
+//   return rs;
+// }
 
 /*
  * \brief Multiply a matrix A by a 3D tensor represented as a vector of
@@ -213,7 +281,6 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
   // Notice that hA, hB and hC are arrays IN THE HOST by the pointers
   // are allocated in the DEVICE.
   T *hA[batchCount];
-
   for (auto i = 0; i < batchCount; i++) {
     hA[i] = initialize_matrix_mem(tensor[i]);
   }
