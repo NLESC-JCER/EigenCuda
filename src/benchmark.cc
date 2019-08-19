@@ -101,6 +101,7 @@ void dot_product() {
   B << 5., 6., 7., 8.;
 
   Mat<double> C = EC.dot(A, B);
+  std::cout << "sum dot: " << C.sum() << "\n";
   assert(abs(C.sum() - 134.) < 1e-8);
   std::cout << "dot product succeeded!\n";
 }
@@ -167,7 +168,7 @@ int main() {
   std::vector<int> vs{100, 200, 500, 1000, 1500, 2000};
 
   // run_benchmark(vs, pinned);
-  // dot_product();
+  dot_product();
   // triple_product();
   right_matrix_tensor();
   return 0;

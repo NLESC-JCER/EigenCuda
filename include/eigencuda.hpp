@@ -96,27 +96,14 @@ private:
   void gpu_free(T *x) const;
 
   // Allocate memory in the device, optionally copying the array to the GPU
-  int initialize_Matrix(const Mat<T> &A, bool copy_to_device = true);
-
-  // Allocate memory in the device, optionally copying the array to the GPU
   T *initialize_matrix_mem(const Mat<T> &A, bool copy_to_device = true);
-  
-  
-  // get pointers from allocated memory using their ids
-  std::tuple<T *, T *, T *> get_pointer_from_ids(std::tuple<int, int, int> ids);
-
+ 
   // Invoke the ?gemm function of cublas
-  void gemm(Shapes shapes, std::tuple<int, int, int> ids);
+  void gemm(Shapes shapes, const T *dA, const T *dB, T *dC);
 
   // Invoke the ?gemmStidedBatched function of CuBlas.
   void gemmBatched(Shapes sh, const T **dA, const T **dB, T **dC,
 		   int batchCount);
-
-  // Deallocate Matrix identifier `id` from the device
-  void free_matrix(int id);
-
-  // Deallocate tensor of matrices
-  void free_tensor(T *tensor[]);
 
   // Cuda variables
   cublasHandle_t _handle;
@@ -125,10 +112,6 @@ private:
   // Asynchronous stream
   cudaStream_t _stream;
   cudaError_t _err_stream;
-
-  // Allocation booking
-  int _counter = 0;
-  std::unordered_map<int, T *> _allocated;
 };
 } // namespace eigencuda
 
