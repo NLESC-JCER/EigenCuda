@@ -146,7 +146,7 @@ void right_matrix_tensor() {
   C << 9., 10., 11., 12., 13., 14.;
   D << 13., 14., 15., 16., 17., 18.;
 
-  std::vector<Mat<double>> tensor{B, C, D};
+  std::vector<Mat<double>> tensor{B};
   std::vector<Mat<double>> rs = EC.right_matrix_tensor(A, tensor);
 
   // Check results
@@ -154,6 +154,10 @@ void right_matrix_tensor() {
   assert(abs(rs[1].sum() - 738.) < 1e-8);
   assert(abs(rs[1].sum() - 990.) < 1e-8);
 
+  for (auto &x: rs){
+    std::cout << "result sum: " << x << "\n";
+  }
+  
   std::cout << "right matrix product succeeded!\n";
 }
 
@@ -172,10 +176,10 @@ int main() {
   bool pinned = false;
   std::vector<int> vs{100, 200, 500, 1000, 1500, 2000};
 
-  run_benchmark(vs, pinned);
-  dot_product();
-  triple_product();
+  // run_benchmark(vs, pinned);
+  // dot_product();
+  // triple_product();
   right_matrix_tensor();
-  test();
+  // test();
   return 0;
 }

@@ -98,6 +98,10 @@ private:
   // Allocate memory in the device, optionally copying the array to the GPU
   int initialize_Matrix(const Mat<T> &A, bool copy_to_device = true);
 
+  // Allocate memory in the device, optionally copying the array to the GPU
+  T *initialize_matrix_mem(const Mat<T> &A, bool copy_to_device = true);
+  
+  
   // get pointers from allocated memory using their ids
   std::tuple<T *, T *, T *> get_pointer_from_ids(std::tuple<int, int, int> ids);
 
@@ -105,14 +109,14 @@ private:
   void gemm(Shapes shapes, std::tuple<int, int, int> ids);
 
   // Invoke the ?gemmStidedBatched function of CuBlas.
-  void gemmBatched(Shapes sh, const T *dA[], T const *dB[], T *dC[],
-                   int batchCount);
+  void gemmBatched(Shapes sh, T **dA, T **dB, T **dC,
+		   int batchCount);
 
   // Deallocate Matrix identifier `id` from the device
   void free_matrix(int id);
 
   // Deallocate tensor of matrices
-  void free_tensor(std::vector<int> ids_tensor);
+  void free_tensor(T *tensor[]);
 
   // Cuda variables
   cublasHandle_t _handle;
