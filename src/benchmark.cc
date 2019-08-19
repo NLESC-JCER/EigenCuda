@@ -155,10 +155,10 @@ void right_matrix_tensor() {
   assert(abs(rs[1].sum() - 738.) < 1e-8);
   assert(abs(rs[1].sum() - 990.) < 1e-8);
 
-  for (auto &x: rs){
+  for (auto &x : rs) {
     std::cout << "result sum: " << x << "\n";
   }
-  
+
   std::cout << "right matrix product succeeded!\n";
 }
 
