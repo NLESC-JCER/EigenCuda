@@ -51,8 +51,7 @@ T *EigenCuda<T>::initialize_matrix_mem(const Mat<T> &A, bool copy_to_device) {
   if (copy_to_device) {
     // Pointers at the host
     const T *hA = A.data();
-    // cudaMemcpyAsync(dA, hA, size_A, cudaMemcpyHostToDevice, _stream);
-    cudaError_t err = cudaMemcpy(dA, hA, size_A, cudaMemcpyHostToDevice);
+    cudaError_t err = cudaMemcpyAsync(dA, hA, size_A, cudaMemcpyHostToDevice, _stream);
     if (err != 0) {
       throw std::runtime_error("Error copy arrays to device");
     }
@@ -328,8 +327,7 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
   for (auto i = 0; i < batchCount; i++) {
     T *hout = rs[i].data();
     T *dout = hC[i];
-    // cudaMemcpyAsync(hout, dout, size_out, cudaMemcpyDeviceToHost, _stream);
-    cudaMemcpy(hout, dout, size_out, cudaMemcpyDeviceToHost);
+    cudaMemcpyAsync(hout, dout, size_out, cudaMemcpyDeviceToHost, _stream);
     rs[0] = Eigen::Map<Mat<T>>(hout, output.rows(), output.cols());
     ;
   }
