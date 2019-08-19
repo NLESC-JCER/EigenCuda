@@ -60,8 +60,14 @@ using Mat = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
 template <typename T> class EigenCuda {
 
 public:
-  EigenCuda() { cublasCreate(&_handle); }
-  EigenCuda(bool pinned) : _pinned{pinned} { cublasCreate(&_handle); }
+  EigenCuda() {
+    cublasCreate(&_handle);
+    _err_stream = cudaStreamCreate(&_stream);
+  }
+  EigenCuda(bool pinned) : _pinned{pinned} {
+    cublasCreate(&_handle);
+    _err_stream = cudaStreamCreate(&_stream);
+  }
 
   // Deallocate both the handler and allocated arrays
   ~EigenCuda();
@@ -90,26 +96,23 @@ private:
   void gpu_free(T *x) const;
 
   // Allocate memory in the device, optionally copying the array to the GPU
-  int initialize_Matrix(const Mat<T> &A, bool copy_to_device = true);
+  T *initialize_matrix_mem(const Mat<T> &A, bool copy_to_device = true);
 
   // Invoke the ?gemm function of cublas
-  void gemm(Shapes shapes, std::tuple<int, int, int> ids);
+  void gemm(Shapes shapes, const T *dA, const T *dB, T *dC);
 
-  // Deallocate Matrix identifier `id` from the device
-  void free_matrix(int id);
+  // Invoke the ?gemmStidedBatched function of CuBlas.
+  void gemmBatched(Shapes sh, const T **dA, const T **dB, T **dC,
+                   int batchCount);
 
   // Cuda variables
   cublasHandle_t _handle;
   bool _pinned = false;
 
-  // Allocation booking
-  int _counter = 0;
-  std::unordered_map<int, T *> _allocated;
+  // Asynchronous stream
+  cudaStream_t _stream;
+  cudaError_t _err_stream;
 };
-
-// Stack a vector of matrices as a matrix where is row contains a matrix
-template <typename T> Mat<T> stack(const std::vector<Mat<T>> &tensor);
-
 } // namespace eigencuda
 
 #endif // EIGENCUDA_H_
