@@ -171,7 +171,7 @@ EigenCuda<T>::triple_tensor_product(const Mat<T> &A, const Mat<T> &C,
   int id_C = initialize_Matrix(C);
 
   // allocate space in device for the temporal matrices
-  int size_Y = A.rows() * C.cols() * sizeof(T);
+  size_t size_Y = A.rows() * C.cols() * sizeof(T);
   Mat<T> X = Mat<T>::Zero(A.cols(), C.cols());
   Mat<T> Y = Mat<T>::Zero(A.rows(), C.cols());
   Mat<T> matrix = Mat<T>::Zero(A.cols(), C.rows());
@@ -240,7 +240,7 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &A,
 
   // allocate space in device for the temporal matrices
   int rows = tensor[0].rows(); // rows of the submatrices
-  int size_Y = rows * A.cols() * sizeof(T);
+  size_t size_Y = rows * A.cols() * sizeof(T);
   Mat<T> Y = Mat<T>::Zero(rows, A.cols());
   Mat<T> matrix = Mat<T>::Zero(rows, A.rows());
 
