@@ -61,17 +61,6 @@ template <typename T> void EigenCuda<T>::free_matrix(int id) {
 }
 
 /*
- * Deallocate the memory associated with a set of matrices identified
- * by a vector of ints.
- */
-// template <typename T>
-// void EigenCuda<T>::free_tensor(T *tensor[]) {
-//   for (T *x = tensor[]; x != std::end(tensor); ++x) {
-//     gpu_free(x);
-//   }
-// }
-
-/*
  * Allocate memory in the device for matrix A, then if if `copy_to_device`
  * copy the array to the device. Sometimes it only neccesary to allocate
  * space in the device without copying the array because the initial
@@ -394,9 +383,14 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
     rs[0] = Eigen::Map<Mat<T>>(hout, output.rows(), output.cols());;
 }
   // Deallocate all the memory from the device
-  // gpu_free(mtxB);
-  // free_tensor(dA);
-  // free_tensor(dC);
+  gpu_free(mtxB);
+  cudaFree(dA);
+  cudaFree(dB);
+  cudaFree(dC);
+  for (auto i=0; i < batchCount; i++) {
+    gpu_free(hA[i]);
+    gpu_free(hC[i]);
+  }
 
   return rs;
 }
