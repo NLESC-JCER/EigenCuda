@@ -33,6 +33,13 @@ inline cudaError_t checkCuda(cudaError_t result) {
   return result;
 }
 
+// Strides to batch gemm
+struct Strides {
+  long long int stA;
+  long long int stB;
+  long long int stC;
+};
+
 // Structure with the sizes to call ?GEMM
 struct Shapes {
   int A_rows;
@@ -83,6 +90,12 @@ public:
   std::vector<Mat<T>> right_matrix_tensor(const Mat<T> &A,
                                           const std::vector<Mat<T>> &tensor);
 
+  // Perform a multiplication between a matrix and a tensor
+  Mat<T> matrix_tensor(const Mat<T> &A, std::vector<Mat<T>> &&tensor);
+
+private:
+  // Allocate memory in the device
+
 private:
   // Allocate memory in the device
   void gpu_alloc(T **x, std::size_t n) const;
@@ -96,9 +109,13 @@ private:
   // Invoke the ?gemm function of cublas
   void gemm(Shapes shapes, const T *dA, const T *dB, T *dC);
 
-  // Invoke the ?gemmStidedBatched function of CuBlas.
+  // Invoke the ?gemmBatched function of CuBlas.
   void gemmBatched(Shapes sh, const T **dA, const T **dB, T **dC,
                    int batchCount);
+
+  // Invoke the ?gemmStridedBatched function of CuBlas
+  void gemmStridedBatched(Shapes sh, Strides strides, const T *dA, const T *dB,
+                          T *dC, int batchCount);
 
   // Cuda variables
   cublasHandle_t _handle;
@@ -107,7 +124,17 @@ private:
   // Asynchronous stream
   cudaStream_t _stream;
   cudaError_t _err_stream;
+
+  // Scalar constanst for calling blas
+  T _alpha = 1.;
+  T _beta = 0.;
+  const T *_palpha = &_alpha;
+  const T *_pbeta = &_beta;
 };
+
+// Stack a vector of matrices as a matrix where is row contains a matrix
+template <typename T> Mat<T> stack(const std::vector<Mat<T>> &tensor);
+
 } // namespace eigencuda
 
 #endif // EIGENCUDA_H_
