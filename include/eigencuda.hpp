@@ -90,6 +90,12 @@ public:
   std::vector<Mat<T>> right_matrix_tensor(const Mat<T> &A,
                                           const std::vector<Mat<T>> &tensor);
 
+  // Perform a multiplication between a matrix and a tensor
+  Mat<T> matrix_tensor(const Mat<T> &A, std::vector<Mat<T>> &&tensor);
+
+private:
+  // Allocate memory in the device  
+  
 private:
   // Allocate memory in the device
   void gpu_alloc(T **x, std::size_t n) const;
@@ -117,6 +123,13 @@ private:
   // Asynchronous stream
   cudaStream_t _stream;
   cudaError_t _err_stream;
+
+  // Scalar constanst for calling blas
+  T _alpha = 1.;
+  T _beta = 0.;
+  const T *_palpha = &_alpha;
+  const T *_pbeta = &_beta;
+
 };
 
 // Stack a vector of matrices as a matrix where is row contains a matrix
