@@ -42,6 +42,7 @@ benchmark_right_matrix_tensor(Mat<T> &A, std::vector<Mat<T>> tensor) {
   start = std::chrono::system_clock::now();
   eigencuda::EigenCuda<double> EC;
   std::vector<Mat<double>> rs = EC.right_matrix_tensor(A, tensor);
+  // Mat<double> rs = EC.matrix_tensor(A, std::move(tensor));
   end = std::chrono::system_clock::now();
   std::chrono::duration<double> elapsed_time = end - start;
   auto gpu_time = elapsed_time.count();
@@ -150,7 +151,9 @@ void right_matrix_tensor() {
   std::vector<Mat<double>> tensor{B, C, D};
   Mat<double> rs = EC.matrix_tensor(A, std::move(tensor));
 
-  std::cout << "cols: " << rs.col(0) << "\n";
+  std::cout << "cols 0: " << rs.col(0) << "\n";
+  std::cout << "cols 1: " << rs.col(1) << "\n";
+  std::cout << "cols 2: " << rs.col(2) << "\n";
   
   // // Check results
   // assert(abs(rs.col(0).sum() - 486.) < 1e-8);
@@ -169,9 +172,9 @@ int main() {
   bool pinned = false;
   std::vector<int> vs{100, 200, 500, 1000, 1500, 2000};
 
-  // run_benchmark(vs, pinned);
+  run_benchmark(vs, pinned);
   // dot_product();
   // triple_product();
-  right_matrix_tensor();
+   // right_matrix_tensor();
   return 0;
 }

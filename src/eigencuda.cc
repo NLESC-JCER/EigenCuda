@@ -3,23 +3,22 @@
 namespace eigencuda {
 
 /*
- * Stack a vector of matrices as a single matrix, where each row corresponds
+ * Stack a vector of matrices as a single matrix, where each column corresponds
  * to a matrix.
  */
 template <typename T> Mat<T> stack(std::vector<Mat<T>> &&tensor) {
 
-  int rows = tensor.size();
-  int cols = tensor[0].size(); // size of each matrix
+  int rows = tensor[0].size(); // size of each matrix
+  int cols = tensor.size();    // number of matrices in tensor
 
+  // row major to save the tensor
   Mat<T> rs = Mat<T>::Zero(rows, cols);
 
-  for (unsigned i = 0; i < tensor.size(); i++) {
-    rs.row(i) = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, 1>>(
-        tensor[i].data(), tensor[i].size());
+  for (auto i = 0; i < cols; i++) {
+    rs.col(i) = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, 1>>(tensor[i].data(), tensor[i].size());
   }
   return rs;
 }
-
   
 /*
  * Removed all the allocated arrays from the device
@@ -280,6 +279,7 @@ Mat<T> EigenCuda<T>::dot(const Mat<T> &A, const Mat<T> &B) {
 /*
  * \brief Multiply a matrix B by a 3D tensor represented as a vector of
  * matrices.
+ * \return vector of matrices representing the result
  * Initially, it allocates memory and copy the matrix B and the tensor to the device.
  *  Also, the function allocates the result tensor Y.
  * The method iterates over each submatrix of the tensor computing:
