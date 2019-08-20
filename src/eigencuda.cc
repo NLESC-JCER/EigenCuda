@@ -328,7 +328,7 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
     T *hout = rs[i].data();
     T *dout = hC[i];
     cudaMemcpyAsync(hout, dout, size_out, cudaMemcpyDeviceToHost, _stream);
-    rs[0] = Eigen::Map<Mat<T>>(hout, output.rows(), output.cols());
+    rs[i] = Eigen::Map<Mat<T>>(hout, output.rows(), output.cols());
     ;
   }
   // Deallocate all the memory from the device
