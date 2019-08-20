@@ -3,6 +3,25 @@
 namespace eigencuda {
 
 /*
+ * Stack a vector of matrices as a single matrix, where each row corresponds
+ * to a matrix.
+ */
+template <typename T> Mat<T> stack(std::vector<Mat<T>> &&tensor) {
+
+  int rows = tensor.size();
+  int cols = tensor[0].size(); // size of each matrix
+
+  Mat<T> rs = Mat<T>::Zero(rows, cols);
+
+  for (unsigned i = 0; i < tensor.size(); i++) {
+    rs.row(i) = Eigen::Map<const Eigen::Matrix<T, Eigen::Dynamic, 1>>(
+        tensor[i].data(), tensor[i].size());
+  }
+  return std::move(rs);
+}
+
+  
+/*
  * Removed all the allocated arrays from the device
  */
 template <typename T> EigenCuda<T>::~EigenCuda() {

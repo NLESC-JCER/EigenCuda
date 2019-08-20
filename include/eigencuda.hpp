@@ -123,6 +123,10 @@ private:
   cudaStream_t _stream;
   cudaError_t _err_stream;
 };
+
+// Stack a vector of matrices as a matrix where is row contains a matrix
+template <typename T> Mat<T> stack(const std::vector<Mat<T>> &tensor);
+
 } // namespace eigencuda
 
 #endif // EIGENCUDA_H_
