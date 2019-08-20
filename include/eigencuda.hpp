@@ -108,7 +108,7 @@ private:
                    int batchCount);
 
   // Invoke the ?gemmStridedBatched function of CuBlas
-  void gemmStridedBatched(Shapes sh, Strides strides, const T *dA, const T *dB, T *dC);
+  void gemmStridedBatched(Shapes sh, Strides strides, const T *dA, const T *dB, T *dC, int batchCount);
   
   // Cuda variables
   cublasHandle_t _handle;

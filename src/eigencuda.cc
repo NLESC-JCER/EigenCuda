@@ -14,10 +14,10 @@ template <typename T> Mat<T> stack(std::vector<Mat<T>> &&tensor) {
   Mat<T> rs = Mat<T>::Zero(rows, cols);
 
   for (unsigned i = 0; i < tensor.size(); i++) {
-    rs.row(i) = Eigen::Map<const Eigen::Matrix<T, Eigen::Dynamic, 1>>(
+    rs.row(i) = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, 1>>(
         tensor[i].data(), tensor[i].size());
   }
-  return std::move(rs);
+  return rs;
 }
 
   
@@ -25,8 +25,6 @@ template <typename T> Mat<T> stack(std::vector<Mat<T>> &&tensor) {
  * Removed all the allocated arrays from the device
  */
 template <typename T> EigenCuda<T>::~EigenCuda() {
-  // wait for everything to finish
-  cudaDeviceSynchronize();
   // destroy handle
   cublasDestroy(_handle);
   // destroy stream
