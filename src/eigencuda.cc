@@ -15,11 +15,12 @@ template <typename T> Mat<T> stack(std::vector<Mat<T>> &&tensor) {
   Mat<T> rs = Mat<T>::Zero(rows, cols);
 
   for (auto i = 0; i < cols; i++) {
-    rs.col(i) = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, 1>>(tensor[i].data(), tensor[i].size());
+    rs.col(i) = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, 1>>(
+        tensor[i].data(), tensor[i].size());
   }
   return rs;
 }
-  
+
 /*
  * Removed all the allocated arrays from the device
  */
@@ -67,7 +68,8 @@ T *EigenCuda<T>::initialize_matrix_mem(const Mat<T> &A, bool copy_to_device) {
   if (copy_to_device) {
     // Pointers at the host
     const T *hA = A.data();
-    cudaError_t err = cudaMemcpyAsync(dA, hA, size_A, cudaMemcpyHostToDevice, _stream);
+    cudaError_t err =
+        cudaMemcpyAsync(dA, hA, size_A, cudaMemcpyHostToDevice, _stream);
     if (err != 0) {
       throw std::runtime_error("Error copy arrays to device");
     }
@@ -108,13 +110,15 @@ void EigenCuda<T>::gemmBatched(Shapes sh, const T **dA, const T **dB, T **dC,
   // call gemm from cublas
   cublasStatus_t status;
   if constexpr (std::is_same<float, T>()) {
-    status = cublasSgemmBatched(_handle, CUBLAS_OP_N, CUBLAS_OP_N, sh.A_rows,
-                                sh.B_cols, sh.A_cols, _palpha, dA, sh.A_rows, dB,
-                                sh.B_rows, _pbeta, dC, sh.C_rows, batchCount);
+    status =
+        cublasSgemmBatched(_handle, CUBLAS_OP_N, CUBLAS_OP_N, sh.A_rows,
+                           sh.B_cols, sh.A_cols, _palpha, dA, sh.A_rows, dB,
+                           sh.B_rows, _pbeta, dC, sh.C_rows, batchCount);
   } else if (std::is_same<double, T>()) {
-    status = cublasDgemmBatched(_handle, CUBLAS_OP_N, CUBLAS_OP_N, sh.A_rows,
-                                sh.B_cols, sh.A_cols, _palpha, dA, sh.A_rows, dB,
-                                sh.B_rows, _pbeta, dC, sh.C_rows, batchCount);
+    status =
+        cublasDgemmBatched(_handle, CUBLAS_OP_N, CUBLAS_OP_N, sh.A_rows,
+                           sh.B_cols, sh.A_cols, _palpha, dA, sh.A_rows, dB,
+                           sh.B_rows, _pbeta, dC, sh.C_rows, batchCount);
   }
   if (status != 0) {
     std::runtime_error("error calling cublas?DgemmBatched");
@@ -128,24 +132,27 @@ void EigenCuda<T>::gemmBatched(Shapes sh, const T **dA, const T **dB, T **dC,
  * multiplication.
  */
 template <typename T>
-void EigenCuda<T>::gemmStridedBatched(Shapes sh, Strides st, const T *dA, const T *dB, T *dC, int batchCount){
+void EigenCuda<T>::gemmStridedBatched(Shapes sh, Strides st, const T *dA,
+                                      const T *dB, T *dC, int batchCount) {
 
   // call gemm from cublas
   cublasStatus_t status;
   if constexpr (std::is_same<float, T>()) {
-      status = cublasSgemmStridedBatched(_handle, CUBLAS_OP_N, CUBLAS_OP_N, sh.A_rows,
-  					 sh.B_cols, sh.A_cols, _palpha, dA, sh.A_rows, st.stA,
-  					 dB, sh.B_rows, st.stB, _pbeta, dC, sh.C_rows, st.stC, batchCount);
-  }   else if (std::is_same<double, T>()) {
-    status = cublasDgemmStridedBatched(_handle, CUBLAS_OP_N, CUBLAS_OP_N, sh.A_rows,
-  				       sh.B_cols, sh.A_cols, _palpha, dA, sh.A_rows, st.stA,
-  				       dB, sh.B_rows, st.stB, _pbeta, dC, sh.C_rows, st.stC, batchCount);
+    status = cublasSgemmStridedBatched(
+        _handle, CUBLAS_OP_N, CUBLAS_OP_N, sh.A_rows, sh.B_cols, sh.A_cols,
+        _palpha, dA, sh.A_rows, st.stA, dB, sh.B_rows, st.stB, _pbeta, dC,
+        sh.C_rows, st.stC, batchCount);
+  } else if (std::is_same<double, T>()) {
+    status = cublasDgemmStridedBatched(
+        _handle, CUBLAS_OP_N, CUBLAS_OP_N, sh.A_rows, sh.B_cols, sh.A_cols,
+        _palpha, dA, sh.A_rows, st.stA, dB, sh.B_rows, st.stB, _pbeta, dC,
+        sh.C_rows, st.stC, batchCount);
   }
   if (status != 0) {
     std::runtime_error("error calling cublas?DgemmBatched");
   }
 }
-  
+
 /*
  * \brief Matrix-Matrix multiplication in GPU
  */
@@ -280,10 +287,9 @@ Mat<T> EigenCuda<T>::dot(const Mat<T> &A, const Mat<T> &B) {
  * \brief Multiply a matrix B by a 3D tensor represented as a vector of
  * matrices.
  * \return vector of matrices representing the result
- * Initially, it allocates memory and copy the matrix B and the tensor to the device.
- *  Also, the function allocates the result tensor Y.
- * The method iterates over each submatrix of the tensor computing:
- * output(i) = tensor(i) * A.
+ * Initially, it allocates memory and copy the matrix B and the tensor to the
+ * device. Also, the function allocates the result tensor Y. The method iterates
+ * over each submatrix of the tensor computing: output(i) = tensor(i) * A.
  * Finally, the tensor output is copy back to the main memory.
  */
 template <typename T>
@@ -372,7 +378,8 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
  * \brief Multiply a matrix B by a 3D tensor represented as a vector of
  * matrices.
  \return a matrix where each column represent the result product.
- * Initially, it allocates memory and copy the matrix B and the tensor to the device.
+ * Initially, it allocates memory and copy the matrix B and the tensor to the
+ device.
  *  Also, the function allocates the result tensor Y.
  * The method iterates over each submatrix of the tensor computing:
  * output(i) = tensor(i) * A.
@@ -380,17 +387,17 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
  */
 template <typename T>
 Mat<T> EigenCuda<T>::matrix_tensor(const Mat<T> &B,
-				   std::vector<Mat<T>> &&tensor){
+                                   std::vector<Mat<T>> &&tensor) {
   // Number of submatrices in the input tensor
   int batchCount = tensor.size();
 
   // Rows and cols of the submatrices in tensor
   long int rows_matrix = tensor[0].rows();
-  long int cols_matrix = tensor[0].cols();  
-  
+  long int cols_matrix = tensor[0].cols();
+
   // Copy Matrix B to the device
   const T *dB = initialize_matrix_mem(B);
- 
+
   // Stack the input vector
   Mat<T> super_matrix = stack(std::move(tensor));
 
@@ -407,7 +414,7 @@ Mat<T> EigenCuda<T>::matrix_tensor(const Mat<T> &B,
   Shapes sh{rows_matrix, cols_matrix, B.rows(), B.cols(), rows_matrix};
   Strides st{rows_matrix * cols_matrix, 0, dim_out};
   gemmStridedBatched(sh, st, dA, dB, dC, batchCount);
-  
+
   // Vector containing the results
   int rows = static_cast<int>(dim_out);
   Mat<T> output = Mat<T>::Zero(rows, batchCount);
@@ -416,12 +423,10 @@ Mat<T> EigenCuda<T>::matrix_tensor(const Mat<T> &B,
   T *hout = output.data();
   cudaMemcpyAsync(hout, dC, size_out, cudaMemcpyDeviceToHost, _stream);
   output = Eigen::Map<Mat<T>>(hout, rows, batchCount);
-  
+
   return output;
- }
-  
-  
-  
+}
+
 // explicit instantiations
 template class EigenCuda<float>;
 template class EigenCuda<double>;
