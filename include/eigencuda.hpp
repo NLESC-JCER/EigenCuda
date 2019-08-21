@@ -5,8 +5,6 @@
 #include <Eigen/Dense>
 #include <cublas_v2.h>
 #include <curand.h>
-#include <tuple>
-#include <unordered_map>
 #include <vector>
 
 /**
@@ -95,13 +93,19 @@ public:
 
 private:
   // Allocate memory in the device
-
-private:
-  // Allocate memory in the device
   void gpu_alloc(T **x, std::size_t n) const;
+
+  // Allocate memory for a tensor in the device;
+  void gpu_alloc_tensor(T *arr[], int shape, int batchCount) const;
 
   // Deallocate memory from the device
   void gpu_free(T *x) const;
+
+  // Free the memory allocated for a tensor
+  void free_tensor_memory(T *arr[]);
+
+  // Copy a tensor to preallocated memory in the device
+  void copy_tensor_to_dev(const std::vector<Mat<T>> &tensor, T *arr[]);
 
   // Allocate memory in the device, optionally copying the array to the GPU
   T *initialize_matrix_mem(const Mat<T> &A, bool copy_to_device = true);
@@ -130,6 +134,9 @@ private:
   T _beta = 0.;
   const T *_palpha = &_alpha;
   const T *_pbeta = &_beta;
+
+  // Cache allocated memory in the device
+  int _batchCount;
 };
 
 // Stack a vector of matrices as a matrix where is row contains a matrix

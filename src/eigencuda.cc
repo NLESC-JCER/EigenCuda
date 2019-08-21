@@ -25,6 +25,8 @@ template <typename T> Mat<T> stack(std::vector<Mat<T>> &&tensor) {
  * Removed all the allocated arrays from the device
  */
 template <typename T> EigenCuda<T>::~EigenCuda() {
+  // Deallocated tensor
+  // free_tensor_memory(_tensorA);
   // destroy handle
   cublasDestroy(_handle);
   // destroy stream
@@ -45,6 +47,49 @@ template <typename T> void EigenCuda<T>::gpu_alloc(T **x, std::size_t n) const {
 template <typename T> void EigenCuda<T>::gpu_free(T *x) const {
   (_pinned) ? cudaFreeHost(x) : cudaFree(x);
 };
+
+/*
+ * Free the memory allocated for a tensor
+ */
+template <typename T> void EigenCuda<T>::free_tensor_memory(T *arr[]) {
+  if (arr != nullptr) {
+    for (auto i = 0; i < _batchCount; i++) {
+      gpu_free(arr[i]);
+    }
+  }
+}
+
+/*
+ * Allocate memory in the device for a tensor
+ */
+template <typename T>
+void EigenCuda<T>::gpu_alloc_tensor(T *arr[], int shape, int batchCount) const {
+  // size of the submatrix inside the tensor
+  size_t size_matrix = shape * sizeof(T);
+
+  for (auto i = 0; i < batchCount; i++) {
+    // Pointer in the device
+    T *dA;
+    // Allocate memory
+    gpu_alloc(&dA, size_matrix);
+    arr[i] = dA;
+  }
+}
+
+/*
+ * Copy each component of the tensor to preallocated memory in the device
+ */
+template <typename T>
+void EigenCuda<T>::copy_tensor_to_dev(const std::vector<Mat<T>> &tensor,
+                                      T *arr[]) {
+  size_t size_A = tensor[0].size() * sizeof(T);
+
+  // Send each matrix one by one
+  for (unsigned i = 0; i < tensor.size(); i++) {
+    const T *hA = tensor[i].data();
+    cudaMemcpyAsync(arr[i], hA, size_A, cudaMemcpyHostToDevice, _stream);
+  }
+}
 
 /*
  * Allocate memory in the device for matrix A, then if if `copy_to_device`
@@ -208,80 +253,6 @@ Mat<T> EigenCuda<T>::dot(const Mat<T> &A, const Mat<T> &B) {
 // std::vector<Mat<T>>
 // EigenCuda<T>::triple_tensor_product(const Mat<T> &A, const Mat<T> &C,
 //                                     const std::vector<Mat<T>> &tensor) {
-//   // Number of submatrices in the input tensor
-//   int batchCount = tensor.size();
-
-//   // Copy Matrix A and C to the device
-//   T *mtxA = initialize_matrix_mem(A);
-//   T *mtxC = initialize_matrix_mem(C);
-
-//   // allocate space in device for the tensor
-//   int rows = tensor[0].rows(); // rows of the submatrices
-//   int cols = tensor[0].cols(); // cols of the submatrices
-//   Mat<T> matrix = Mat<T>::Zero(rows, cols);
-
-//   // Allocate space and copy to the device the input tensor
-//   // Notice that hA, hB and hC are arrays IN THE HOST by the pointers
-//   // are allocated in the DEVICE.
-//   T *hA[batchCount];
-//   for (auto i = 0; i < batchCount; i++) {
-//     hA[i] = mtxA; // Use the same pointer
-//   }
-
-//   // This array contains the pointers to the allocated space for the tensor
-//   T *hB[batchCount];
-//   for (auto i = 0; i < batchCount; i++) {
-//     hB[i] = initialize_matrix_mem(tensor[i]);
-//   }
-
-//   // Use an array of pointers to the same matrix allocated in the device
-//   T *hC[batchCount];
-//   for (auto i = 0; i < batchCount; i++) {
-//     hC[i] = mtxC;
-//   }
-
-//   // Allocated space for the temporal matrix
-//   // matrix containing the product tensor(i) * C
-//   Mat<T> X = Mat<T>::Zero(matrix.rows(), C.cols());
-//   T *hX[batchCount];
-//   for (auto i = 0; i < batchCount; i++) {
-//     hX[i] = initialize_matrix_mem(X, false);
-//   }
-//   Mat<T> Y = Mat<T>::Zero(A.rows(), C.cols());
-//   T *hY[batchCount];
-//   for (auto i = 0; i < batchCount; i++) {
-//     hY[i] = initialize_matrix_mem(Y, false);
-//   }
-
-//   // Allocate space in the device for the array of pointers
-//   const T **dA, **dB, **dC, **dZ;
-//   T **dX, **dY;
-//   size_t size_batch = batchCount * sizeof(T*);
-//   cudaMalloc(&dA, size_batch);
-//   cudaMalloc(&dB, size_batch);
-//   cudaMalloc(&dC, size_batch);
-//   cudaMalloc(&dX, size_batch);
-//   cudaMalloc(&dY, size_batch);
-
-//   // Copy the arrays of pointers from host to the device
-//   cudaMemcpy(dA, hA, size_batch, cudaMemcpyHostToDevice);
-//   cudaMemcpy(dB, hB, size_batch, cudaMemcpyHostToDevice);
-//   cudaMemcpy(dC, hC, size_batch, cudaMemcpyHostToDevice);
-//   cudaMemcpy(dX, hX, size_batch, cudaMemcpyHostToDevice);
-//   cudaMemcpy(dY, hY, size_batch, cudaMemcpyHostToDevice);
-
-//   // First tensor matrix multiplication
-//   Shapes sh{matrix.rows(), matrix.cols(), C.rows(), C.cols(), matrix.rows()};
-//   gemmBatched(sh, dB, dC, dX, batchCount);
-
-//   // Seconds tensor matrix multiplication
-//   sh = Shapes{A.rows(), A.cols(), X.rows(), X.cols(), A.rows()};
-//   gemmBatched(sh, dA, dX, dY, batchCount);
-
-//   std::vector<Mat<T>> rs;
-
-//   return rs;
-// }
 
 /*
  * \brief Multiply a matrix B by a 3D tensor represented as a vector of
@@ -297,41 +268,35 @@ std::vector<Mat<T>>
 EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
                                   const std::vector<Mat<T>> &tensor) {
   // Number of submatrices in the input tensor
-  int batchCount = tensor.size();
+  int _batchCount = tensor.size();
 
   // Copy Matrix B to the device
   T *mtxB = initialize_matrix_mem(B);
 
-  // allocate space in device for the temporal matrix
-  int rows = tensor[0].rows(); // rows of the submatrices
-  int cols = tensor[0].cols(); // cols of the submatrices
-  Mat<T> matrix = Mat<T>::Zero(rows, cols);
+  // First submatrix from the tensor
+  Mat<T> matrix = tensor[0];
 
   // Allocate space and copy to the device the input tensor
   // Notice that hA, hB and hC are arrays IN THE HOST by the pointers
   // are allocated in the DEVICE.
-  T *hA[batchCount];
-  for (auto i = 0; i < batchCount; i++) {
-    hA[i] = initialize_matrix_mem(tensor[i]);
-  }
+  T *hA[_batchCount];
+  gpu_alloc_tensor(hA, matrix.size(), _batchCount);
+  copy_tensor_to_dev(tensor, hA);
 
   // represent the matrix B as a tensor where all the submatrices are the same
-  T *hB[batchCount];
-  for (auto i = 0; i < batchCount; i++) {
+  T *hB[_batchCount];
+  for (auto i = 0; i < _batchCount; i++) {
     hB[i] = mtxB;
   }
 
   // Allocate space in the device for the output tensor
-  T *hC[batchCount];
-  Mat<T> output = Mat<T>::Zero(matrix.rows(), B.cols());
-  for (auto i = 0; i < batchCount; i++) {
-    hC[i] = initialize_matrix_mem(output, false);
-  }
+  T *hC[_batchCount];
+  gpu_alloc_tensor(hC, matrix.rows() * B.cols(), _batchCount);
 
   // Allocate space in the device for the array of pointers
   const T **dA, **dB;
   T **dC;
-  size_t size_batch = batchCount * sizeof(T *);
+  size_t size_batch = _batchCount * sizeof(T *);
   cudaMalloc(&dA, size_batch);
   cudaMalloc(&dB, size_batch);
   cudaMalloc(&dC, size_batch);
@@ -343,33 +308,30 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
 
   // Call tensor matrix multiplication
   Shapes sh{matrix.rows(), matrix.cols(), B.rows(), B.cols(), matrix.rows()};
-  gemmBatched(sh, dA, dB, dC, batchCount);
+  gemmBatched(sh, dA, dB, dC, _batchCount);
 
   // Vector containing the results
-  std::vector<Mat<T>> rs(batchCount,
-                         Mat<T>::Zero(output.rows(), output.cols()));
-  std::size_t size_out = output.size() * sizeof(T);
+  std::vector<Mat<T>> rs(_batchCount, Mat<T>::Zero(matrix.rows(), B.cols()));
+  std::size_t size_out = matrix.rows() * B.cols() * sizeof(T);
 
   // Copy Array of pointers on the device to the host
   cudaMemcpyAsync(hC, dC, size_batch, cudaMemcpyDeviceToHost, _stream);
 
   // Copy each array back to the device
-  for (auto i = 0; i < batchCount; i++) {
+  for (auto i = 0; i < _batchCount; i++) {
     T *hout = rs[i].data();
     T *dout = hC[i];
     cudaMemcpyAsync(hout, dout, size_out, cudaMemcpyDeviceToHost, _stream);
-    rs[i] = Eigen::Map<Mat<T>>(hout, output.rows(), output.cols());
+    rs[i] = Eigen::Map<Mat<T>>(hout, matrix.rows(), B.cols());
     ;
   }
   // Deallocate all the memory from the device
   gpu_free(mtxB);
+  free_tensor_memory(hA);
+  free_tensor_memory(hC);
   cudaFree(dA);
   cudaFree(dB);
   cudaFree(dC);
-  for (auto i = 0; i < batchCount; i++) {
-    gpu_free(hA[i]);
-    gpu_free(hC[i]);
-  }
 
   return rs;
 }
