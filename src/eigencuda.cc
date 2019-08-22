@@ -1,4 +1,5 @@
 #include "eigencuda.hpp"
+#include <iostream>
 
 namespace eigencuda {
 
@@ -47,6 +48,16 @@ template <typename T> void EigenCuda<T>::gpu_free(T *x) const {
   (_pinned) ? cudaFreeHost(x) : cudaFree(x);
 };
 
+/*
+ * Store the pointer to a tensor in device
+ */
+template <typename T> void EigenCuda<T>::set_device_pointer(T *arr[], int index) {  
+  switch (index) {
+  case 0: _dev.tensorA = arr; break;
+  case 1: _dev.tensorB = arr; break;
+  case 2: _dev.tensorC = arr; break;
+  }
+}
 
 /*
  * Allocate memory in the device for a tensor
@@ -69,14 +80,12 @@ void EigenCuda<T>::gpu_alloc_tensor(T *arr[], int shape, int batchCount) const {
  * Free the memory allocated for a tensor
  */
 template <typename T> void EigenCuda<T>::free_tensor_memory(T *arr[], int batchCount) const {
-  for (auto i = 0; i < batchCount; i++) {
-    gpu_free(arr[i]);	
+  if (arr != nullptr) {
+    for (auto i = 0; i < batchCount; i++) {
+      gpu_free(arr[i]);	
+    }    
   }
 }
-
-  /*
-   * Store the pointer to the device in memory
-   */
   
 /*
  * Copy each component of the tensor to preallocated memory in the device
@@ -268,7 +277,7 @@ Mat<T> EigenCuda<T>::dot(const Mat<T> &A, const Mat<T> &B) const {
 template <typename T>
 std::vector<Mat<T>>
 EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
-                                  const std::vector<Mat<T>> &tensor) const{
+                                  const std::vector<Mat<T>> &tensor){
   // Number of submatrices in the input tensor
   int batchCount = tensor.size();
 
@@ -282,7 +291,10 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
   // Notice that hA, hB and hC are arrays IN THE HOST by the pointers
   // are allocated in the DEVICE.
   T *hA[batchCount];
-  gpu_alloc_tensor(hA, matrix.size(), batchCount);
+  if (_dev.tensorA == nullptr){
+    gpu_alloc_tensor(hA, matrix.size(), batchCount);
+    set_device_pointer(hA, 0);
+  }
   copy_tensor_to_dev(tensor, hA);
 
   // represent the matrix B as a tensor where all the submatrices are the same
@@ -293,7 +305,13 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
 
   // Allocate space in the device for the output tensor
   T *hC[batchCount];
-  gpu_alloc_tensor(hC, matrix.rows() * B.cols(), batchCount);
+    // gpu_alloc_tensor(hC, matrix.rows() * B.cols(), batchCount);
+  if (_dev.tensorC == nullptr){
+    std::cout << "this branch\n";
+    gpu_alloc_tensor(hC, matrix.rows() * B.cols(), batchCount);  
+    set_device_pointer(hC, 2);
+  }
+
 
   // Allocate space in the device for the array of pointers
   const T **dA, **dB;
@@ -327,14 +345,16 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
     rs[i] = Eigen::Map<Mat<T>>(hout, matrix.rows(), B.cols());
     ;
   }
-  // Deallocate all the memory from the device
+  // Deallocate memory from the device
   gpu_free(mtxB);
   cudaFree(dA);
   cudaFree(dB);
   cudaFree(dC);
-  free_tensor_memory(hA, batchCount);
-  free_tensor_memory(hC, batchCount);  
 
+  // Free the tensor memory
+  free_tensor_memory(_dev.tensorA, batchCount);
+  free_tensor_memory(_dev.tensorC, batchCount);  
+  
   return rs;
 }
 
