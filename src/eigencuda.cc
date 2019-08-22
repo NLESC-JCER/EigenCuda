@@ -1,5 +1,4 @@
 #include "eigencuda.hpp"
-#include <iostream>
 
 namespace eigencuda {
 
@@ -70,21 +69,11 @@ void EigenCuda<T>::gpu_alloc_tensor(T *arr[], int shape, int batchCount) const {
  * Free the memory allocated for a tensor
  */
 template <typename T> void EigenCuda<T>::free_tensor_memory(T *arr[], int batchCount) {
-  cudaPointerAttributes attributes;
-  if (arr != nullptr) {
-    for (auto i = 0; i < batchCount; i++) {
-      cudaPointerGetAttributes(&attributes, arr[i]);
-      if (attributes.devicePointer != nullptr){
-	gpu_free(arr[i]);	
-      } else {
-	std::cout << "pointer: " << i << " is NUll\n";
-      }
-    }
+  for (auto i = 0; i < batchCount; i++) {
+    gpu_free(arr[i]);	
   }
 }
- 
 
-  
 /*
  * Copy each component of the tensor to preallocated memory in the device
  */
