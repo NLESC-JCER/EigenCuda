@@ -5,6 +5,7 @@
 #include <Eigen/Dense>
 #include <cublas_v2.h>
 #include <curand.h>
+#include <unordered_map>
 #include <vector>
 
 /**
@@ -30,6 +31,8 @@ inline cudaError_t checkCuda(cudaError_t result) {
 #endif
   return result;
 }
+
+template <typename T> struct DeviceP { T **tensor = nullptr; };
 
 // Strides to batch gemm
 struct Strides {
@@ -63,10 +66,12 @@ public:
   EigenCuda() {
     cublasCreate(&_handle);
     _err_stream = cudaStreamCreate(&_stream);
+    init_cache();
   }
   EigenCuda(bool pinned) : _pinned{pinned} {
     cublasCreate(&_handle);
     _err_stream = cudaStreamCreate(&_stream);
+    init_cache();
   }
 
   // Deallocate both the handler and allocated arrays
@@ -96,7 +101,7 @@ private:
   void gpu_alloc(T **x, std::size_t n) const;
 
   // Allocate memory for a tensor in the device;
-  void gpu_alloc_tensor(T *arr[], int shape, int batchCount) const;
+  void gpu_alloc_tensor(T *arr[], int shape) const;
 
   // Deallocate memory from the device
   void gpu_free(T *x) const;
@@ -107,9 +112,15 @@ private:
   // Copy a tensor to preallocated memory in the device
   void copy_tensor_to_dev(const std::vector<Mat<T>> &tensor, T *arr[]);
 
+  // Search for allocated memory in the device or allocate it if not available
+  void retrieve_or_allocate(T *hA[], int size, const std::string &identifier);
+
   // Allocate memory in the device, optionally copying the array to the GPU
   T *initialize_matrix_mem(const Mat<T> &A, bool copy_to_device = true);
 
+  // initialize the cache to store the allocated tensors in the device
+  void init_cache();
+  
   // Invoke the ?gemm function of cublas
   void gemm(Shapes shapes, const T *dA, const T *dB, T *dC);
 
@@ -137,6 +148,7 @@ private:
 
   // Cache allocated memory in the device
   int _batchCount;
+  std::unordered_map<std::string, DeviceP<T>> _allocated;
 };
 
 // Stack a vector of matrices as a matrix where is row contains a matrix
