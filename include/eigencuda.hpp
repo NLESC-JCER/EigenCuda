@@ -102,7 +102,7 @@ private:
   void gpu_free(T *x) const;
 
   // Free the memory allocated for a tensor
-  void free_tensor_memory(T *arr[]);
+  void free_tensor_memory(T *arr[], int batchCount);
 
   // Copy a tensor to preallocated memory in the device
   void copy_tensor_to_dev(const std::vector<Mat<T>> &tensor, T *arr[]);
@@ -134,9 +134,6 @@ private:
   T _beta = 0.;
   const T *_palpha = &_alpha;
   const T *_pbeta = &_beta;
-
-  // Cache allocated memory in the device
-  int _batchCount;
 };
 
 // Stack a vector of matrices as a matrix where is row contains a matrix
