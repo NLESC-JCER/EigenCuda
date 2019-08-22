@@ -1,4 +1,5 @@
 #include "eigencuda.hpp"
+#include <iostream>
 
 namespace eigencuda {
 
@@ -25,8 +26,7 @@ template <typename T> Mat<T> stack(std::vector<Mat<T>> &&tensor) {
  * Removed all the allocated arrays from the device
  */
 template <typename T> EigenCuda<T>::~EigenCuda() {
-  // Deallocated tensor
-  // free_tensor_memory(_tensorA);
+
   // destroy handle
   cublasDestroy(_handle);
   // destroy stream
@@ -48,16 +48,6 @@ template <typename T> void EigenCuda<T>::gpu_free(T *x) const {
   (_pinned) ? cudaFreeHost(x) : cudaFree(x);
 };
 
-/*
- * Free the memory allocated for a tensor
- */
-template <typename T> void EigenCuda<T>::free_tensor_memory(T *arr[]) {
-  if (arr != nullptr) {
-    for (auto i = 0; i < _batchCount; i++) {
-      gpu_free(arr[i]);
-    }
-  }
-}
 
 /*
  * Allocate memory in the device for a tensor
@@ -76,6 +66,25 @@ void EigenCuda<T>::gpu_alloc_tensor(T *arr[], int shape, int batchCount) const {
   }
 }
 
+/*
+ * Free the memory allocated for a tensor
+ */
+template <typename T> void EigenCuda<T>::free_tensor_memory(T *arr[], int batchCount) {
+  cudaPointerAttributes attributes;
+  if (arr != nullptr) {
+    for (auto i = 0; i < batchCount; i++) {
+      cudaPointerGetAttributes(&attributes, arr[i]);
+      if (attributes.devicePointer != nullptr){
+	gpu_free(arr[i]);	
+      } else {
+	std::cout << "pointer: " << i << " is NUll\n";
+      }
+    }
+  }
+}
+ 
+
+  
 /*
  * Copy each component of the tensor to preallocated memory in the device
  */
@@ -268,7 +277,7 @@ std::vector<Mat<T>>
 EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
                                   const std::vector<Mat<T>> &tensor) {
   // Number of submatrices in the input tensor
-  int _batchCount = tensor.size();
+  int batchCount = tensor.size();
 
   // Copy Matrix B to the device
   T *mtxB = initialize_matrix_mem(B);
@@ -279,24 +288,24 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
   // Allocate space and copy to the device the input tensor
   // Notice that hA, hB and hC are arrays IN THE HOST by the pointers
   // are allocated in the DEVICE.
-  T *hA[_batchCount];
-  gpu_alloc_tensor(hA, matrix.size(), _batchCount);
+  T *hA[batchCount];
+  gpu_alloc_tensor(hA, matrix.size(), batchCount);
   copy_tensor_to_dev(tensor, hA);
 
   // represent the matrix B as a tensor where all the submatrices are the same
-  T *hB[_batchCount];
-  for (auto i = 0; i < _batchCount; i++) {
+  T *hB[batchCount];
+  for (auto i = 0; i < batchCount; i++) {
     hB[i] = mtxB;
   }
 
   // Allocate space in the device for the output tensor
-  T *hC[_batchCount];
-  gpu_alloc_tensor(hC, matrix.rows() * B.cols(), _batchCount);
+  T *hC[batchCount];
+  gpu_alloc_tensor(hC, matrix.rows() * B.cols(), batchCount);
 
   // Allocate space in the device for the array of pointers
   const T **dA, **dB;
   T **dC;
-  size_t size_batch = _batchCount * sizeof(T *);
+  size_t size_batch = batchCount * sizeof(T *);
   cudaMalloc(&dA, size_batch);
   cudaMalloc(&dB, size_batch);
   cudaMalloc(&dC, size_batch);
@@ -308,17 +317,17 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
 
   // Call tensor matrix multiplication
   Shapes sh{matrix.rows(), matrix.cols(), B.rows(), B.cols(), matrix.rows()};
-  gemmBatched(sh, dA, dB, dC, _batchCount);
+  gemmBatched(sh, dA, dB, dC, batchCount);
 
   // Vector containing the results
-  std::vector<Mat<T>> rs(_batchCount, Mat<T>::Zero(matrix.rows(), B.cols()));
+  std::vector<Mat<T>> rs(batchCount, Mat<T>::Zero(matrix.rows(), B.cols()));
   std::size_t size_out = matrix.rows() * B.cols() * sizeof(T);
 
   // Copy Array of pointers on the device to the host
   cudaMemcpyAsync(hC, dC, size_batch, cudaMemcpyDeviceToHost, _stream);
 
   // Copy each array back to the device
-  for (auto i = 0; i < _batchCount; i++) {
+  for (auto i = 0; i < batchCount; i++) {
     T *hout = rs[i].data();
     T *dout = hC[i];
     cudaMemcpyAsync(hout, dout, size_out, cudaMemcpyDeviceToHost, _stream);
@@ -327,11 +336,11 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
   }
   // Deallocate all the memory from the device
   gpu_free(mtxB);
-  free_tensor_memory(hA);
-  free_tensor_memory(hC);
   cudaFree(dA);
   cudaFree(dB);
   cudaFree(dC);
+  free_tensor_memory(hA, batchCount);
+  free_tensor_memory(hC, batchCount);  
 
   return rs;
 }
