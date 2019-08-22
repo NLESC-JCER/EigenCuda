@@ -1,5 +1,4 @@
 #include "eigencuda.hpp"
-#include <iostream>
 
 namespace eigencuda {
 
@@ -27,11 +26,7 @@ template <typename T> Mat<T> stack(std::vector<Mat<T>> &&tensor) {
  */
 template <typename T> EigenCuda<T>::~EigenCuda() {
   // Deallocated tensor
-  for (auto &pair : _allocated) {
-    if (pair.second.tensor != nullptr) {
-      free_tensor_memory(pair.second.tensor);
-    }
-  }
+  // free_tensor_memory(_tensorA);
   // destroy handle
   cublasDestroy(_handle);
   // destroy stream
@@ -57,8 +52,10 @@ template <typename T> void EigenCuda<T>::gpu_free(T *x) const {
  * Free the memory allocated for a tensor
  */
 template <typename T> void EigenCuda<T>::free_tensor_memory(T *arr[]) {
-  for (auto i = 0; i < _batchCount; i++) {
-    gpu_free(arr[i]);
+  if (arr != nullptr) {
+    for (auto i = 0; i < _batchCount; i++) {
+      gpu_free(arr[i]);
+    }
   }
 }
 
@@ -66,11 +63,11 @@ template <typename T> void EigenCuda<T>::free_tensor_memory(T *arr[]) {
  * Allocate memory in the device for a tensor
  */
 template <typename T>
-void EigenCuda<T>::gpu_alloc_tensor(T *arr[], int shape) const {
+void EigenCuda<T>::gpu_alloc_tensor(T *arr[], int shape, int batchCount) const {
   // size of the submatrix inside the tensor
   size_t size_matrix = shape * sizeof(T);
 
-  for (auto i = 0; i < _batchCount; i++) {
+  for (auto i = 0; i < batchCount; i++) {
     // Pointer in the device
     T *dA;
     // Allocate memory
@@ -91,33 +88,6 @@ void EigenCuda<T>::copy_tensor_to_dev(const std::vector<Mat<T>> &tensor,
   for (unsigned i = 0; i < tensor.size(); i++) {
     const T *hA = tensor[i].data();
     cudaMemcpyAsync(arr[i], hA, size_A, cudaMemcpyHostToDevice, _stream);
-  }
-}
-
-/*
- * Retrieve the pointer for a tensor allocated in memory or allocate
- * memory in case that there is not previously allocated memory.
- */
-template <typename T>
-void EigenCuda<T>::retrieve_or_allocate(T *hA[], int size,
-                                        const std::string &identifier) {
-  DeviceP<T> dev = _allocated.at(identifier);
-  if (dev.tensor == nullptr) {
-    gpu_alloc_tensor(hA, size);
-    _allocated[identifier] = DeviceP<T>{hA};
-  } else {
-    hA = dev.tensor;
-  }
-}
-
-/*
- * initialize the cache to store the allocated tensors in the device
- */
-template <typename T> void EigenCuda<T>::init_cache() {
-  std::vector<std::string> ids{"tensorA", "tensorB", "tensorC"};
-  for (const auto &x : ids) {
-    DeviceP<T> dev;
-    _allocated.emplace(std::make_pair(x, dev));
   }
 }
 
@@ -298,7 +268,7 @@ std::vector<Mat<T>>
 EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
                                   const std::vector<Mat<T>> &tensor) {
   // Number of submatrices in the input tensor
-  _batchCount = tensor.size();
+  int _batchCount = tensor.size();
 
   // Copy Matrix B to the device
   T *mtxB = initialize_matrix_mem(B);
@@ -310,7 +280,7 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
   // Notice that hA, hB and hC are arrays IN THE HOST by the pointers
   // are allocated in the DEVICE.
   T *hA[_batchCount];
-  retrieve_or_allocate(hA, matrix.size(), "tensorA");
+  gpu_alloc_tensor(hA, matrix.size(), _batchCount);
   copy_tensor_to_dev(tensor, hA);
 
   // represent the matrix B as a tensor where all the submatrices are the same
@@ -321,7 +291,7 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
 
   // Allocate space in the device for the output tensor
   T *hC[_batchCount];
-  retrieve_or_allocate(hC, matrix.rows() * B.cols(), "tensorC");
+  gpu_alloc_tensor(hC, matrix.rows() * B.cols(), _batchCount);
 
   // Allocate space in the device for the array of pointers
   const T **dA, **dB;
@@ -353,9 +323,12 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
     T *dout = hC[i];
     cudaMemcpyAsync(hout, dout, size_out, cudaMemcpyDeviceToHost, _stream);
     rs[i] = Eigen::Map<Mat<T>>(hout, matrix.rows(), B.cols());
+    ;
   }
   // Deallocate all the memory from the device
   gpu_free(mtxB);
+  free_tensor_memory(hA);
+  free_tensor_memory(hC);
   cudaFree(dA);
   cudaFree(dB);
   cudaFree(dC);
