@@ -139,10 +139,37 @@ protected:
 template <typename T> class MatrixTensor: public EigenCuda<T> {
 
 public:
+  MatrixTensor(int batchCount, int dimA, int dimB, int dimC, bool pinned = false) :
+    EigenCuda<T>{pinned}, _batchCount{batchCount}, _dimA{dimA}, _dimB{dimB}, _dimC{dimC} {
+
+      // Allocate space in the GPU
+      T *arr[_batchCount], *brr[_batchCount], *crr[_batchCount];
+      EigenCuda<T>::gpu_alloc_tensor(arr, _dimA, _batchCount);
+      EigenCuda<T>::gpu_alloc_tensor(brr, _dimB, _batchCount);
+      EigenCuda<T>::gpu_alloc_tensor(crr, _dimC, _batchCount);
+
+      // Store the allocated space
+      _tensorA = arr;
+      _tensorB = brr;
+      _tensorC = crr;      
+  }
   
   // Perform a multiplication between a matrix and a tensor
   std::vector<Mat<T>> tensor_dot_matrix();
 
+private:
+  // Dimension of the tensor
+  int  _batchCount;
+  int _dimA;
+  int _dimB;
+  int _dimC;
+
+  // Array of pointers to the memory in the device
+  T **_tensorA;
+  T **_tensorB;
+  T **_tensorC;
+  
+  
 };
   
 // Stack a vector of matrices as a matrix where is row contains a matrix
