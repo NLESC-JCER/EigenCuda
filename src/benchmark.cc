@@ -58,7 +58,7 @@ benchmark_right_matrix_tensor(Mat<T> &A, std::vector<Mat<T>> tensor) {
   end = std::chrono::system_clock::now();
   elapsed_time = end - start;
   auto cpu_time = elapsed_time.count();
-  std::cout << "CPU triple tensor product: " << cpu_time << " secs\n";
+  std::cout << "CPU tensor matrix product: " << cpu_time << " secs\n";
 
   return std::make_tuple(gpu_time, cpu_time);
 }
@@ -107,30 +107,6 @@ void dot_product() {
   std::cout << "dot product succeeded!\n";
 }
 
-// void triple_product() {
-//   // Define matrices and class to handle GPU resources
-//   eigencuda::EigenCuda<double> EC;
-//   // Call matrix multiplication GPU
-//   Mat<double> A = Mat<double>::Zero(2, 3);
-//   Mat<double> B = Mat<double>::Zero(3, 2);
-//   Mat<double> C = Mat<double>::Zero(3, 3);
-//   Mat<double> D = Mat<double>::Zero(3, 3);
-
-//   // Define matrices
-//   A << 1., 2., 3., 4., 5., 6.;
-//   B << 5., 6., 7., 8., 9., 10.;
-//   C << 9., 10., 11., 12., 13., 14., 15., 16., 17.;
-//   D << 13., 14., 15., 16., 17., 18., 19., 20., 21.;
-
-//   std::vector<Mat<double>> tensor{C, D};
-//   std::vector<Mat<double>> rs = EC.triple_tensor_product(A, B, tensor);
-
-//   // Check results
-//   assert(abs(rs[0].sum() - 12993.) < 1e-8);
-//   assert(abs(rs[1].sum() - 16773.) < 1e-8);
-
-//   std::cout << "triple product succeeded!\n";
-// }
 
 void right_matrix_tensor() {
   // Define matrices and class to handle GPU resources
@@ -168,6 +144,32 @@ void right_matrix_tensor() {
   std::cout << "right matrix product succeeded!\n";
 }
 
+void tensor_matrix() {
+  // Define matrices and class to handle GPU resources
+
+  // Call matrix multiplication GPU
+  Mat<double> A = Mat<double>::Zero(2, 3);
+  Mat<double> B = Mat<double>::Zero(3, 2);
+  Mat<double> C = Mat<double>::Zero(3, 2);
+  Mat<double> D = Mat<double>::Zero(3, 2);
+
+  // Define matrices
+  A << 1., 2., 3., 4., 5., 6.;
+  B << 5., 6., 7., 8., 9., 10.;
+  C << 9., 10., 11., 12., 13., 14.;
+  D << 13., 14., 15., 16., 17., 18.;
+  std::vector<Mat<double>> tensor{B, C, D};
+  
+  // class to handle the GPU resources
+  eigencuda::TensorMatrix<double> TM{3, 6, 6, 9};
+  std::vector<Mat<double>> rs = TM.tensor_dot_matrix(tensor, A);
+
+  for (auto &x : rs) {
+    std::cout << "tensor: " << x << "\n";
+  }
+
+}
+
 int main() {
 
   bool pinned = false;
@@ -175,7 +177,7 @@ int main() {
 
   // run_benchmark(vs, pinned);
   // dot_product();
-  // triple_product();
   right_matrix_tensor();
+  tensor_matrix();
   return 0;
 }

@@ -17,8 +17,8 @@ TensorMatrix<T>::tensor_dot_matrix(std::vector<Mat<T>> tensor, Mat<T> B) {
   // represent the matrix B as a tensor where all the submatrices are the same
   T *mtxB;
   size_t size_B = B.size() * sizeof(T);
-  cudaMemcpyAsync(mtxB, B.data(), size_B, cudaMemcpyHostToDevice, this ->_stream);
-    for (auto i = 0; i < _batchCount; i++) {
+  cudaMemcpyAsync(_tensorB[0], B.data(), size_B, cudaMemcpyHostToDevice, this ->_stream);
+    for (auto i = 1; i < _batchCount; i++) {
     _tensorB[i] = mtxB;
   }
 
