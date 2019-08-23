@@ -155,7 +155,7 @@ public:
   }
   
   // Perform a multiplication between a matrix and a tensor
-  std::vector<Mat<T>> tensor_dot_matrix();
+  std::vector<Mat<T>> tensor_dot_matrix(std::vector<Mat<T>> tensor, Mat<T> B);
 
 private:
   // Dimension of the tensor
