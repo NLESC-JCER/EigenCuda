@@ -91,7 +91,7 @@ public:
   // Perform a multiplication between a matrix and a tensor
   Mat<T> matrix_tensor(const Mat<T> &A, std::vector<Mat<T>> &&tensor) const;
 
-private:
+protected:
   // Allocate memory in the device
   void gpu_alloc(T **x, std::size_t n) const;
 
@@ -136,6 +136,15 @@ private:
   const T *_pbeta = &_beta;
 };
 
+template <typename T> class MatrixTensor: public EigenCuda<T> {
+
+public:
+  
+  // Perform a multiplication between a matrix and a tensor
+  std::vector<Mat<T>> tensor_dot_matrix();
+
+};
+  
 // Stack a vector of matrices as a matrix where is row contains a matrix
 template <typename T> Mat<T> stack(const std::vector<Mat<T>> &tensor);
 
