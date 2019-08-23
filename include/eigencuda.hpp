@@ -136,10 +136,10 @@ protected:
   const T *_pbeta = &_beta;
 };
 
-template <typename T> class MatrixTensor: public EigenCuda<T> {
+template <typename T> class TensorMatrix: public EigenCuda<T> {
 
 public:
-  MatrixTensor(int batchCount, int dimA, int dimB, int dimC, bool pinned = false) :
+  TensorMatrix(int batchCount, int dimA, int dimB, int dimC, bool pinned = false) :
     EigenCuda<T>{pinned}, _batchCount{batchCount}, _dimA{dimA}, _dimB{dimB}, _dimC{dimC} {
 
       // Allocate space in the GPU

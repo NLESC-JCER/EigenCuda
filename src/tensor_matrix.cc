@@ -5,7 +5,7 @@ namespace eigencuda {
   
 template <typename T>
 std::vector<Mat<T>>
-MatrixTensor<T>::tensor_dot_matrix() {
+TensorMatrix<T>::tensor_dot_matrix() {
   std::vector<Mat<T>> rs;
   return rs;
 }
@@ -13,6 +13,6 @@ MatrixTensor<T>::tensor_dot_matrix() {
   
   
 // explicit instantiations
-template class MatrixTensor<float>;
-template class MatrixTensor<double>;
+template class TensorMatrix<float>;
+template class TensorMatrix<double>;
 } // namespace eigencuda

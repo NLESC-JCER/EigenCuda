@@ -1,5 +1,5 @@
 
-add_library(eigencuda eigencuda.cc matrix_tensor.cc) 
+add_library(eigencuda eigencuda.cc tensor_matrix.cc) 
 add_executable(benchmark benchmark.cc)
 
 target_include_directories(eigencuda
