@@ -47,7 +47,6 @@ template <typename T> void EigenCuda<T>::gpu_free(T *x) const {
   (_pinned) ? cudaFreeHost(x) : cudaFree(x);
 };
 
-
 /*
  * Allocate memory in the device for a tensor
  */
@@ -68,16 +67,17 @@ void EigenCuda<T>::gpu_alloc_tensor(T *arr[], int shape, int batchCount) const {
 /*
  * Free the memory allocated for a tensor
  */
-template <typename T> void EigenCuda<T>::free_tensor_memory(T *arr[], int batchCount) const {
+template <typename T>
+void EigenCuda<T>::free_tensor_memory(T *arr[], int batchCount) const {
   for (auto i = 0; i < batchCount; i++) {
-    gpu_free(arr[i]);	
+    gpu_free(arr[i]);
   }
 }
 
-  /*
-   * Store the pointer to the device in memory
-   */
-  
+/*
+ * Store the pointer to the device in memory
+ */
+
 /*
  * Copy each component of the tensor to preallocated memory in the device
  */
@@ -100,7 +100,8 @@ void EigenCuda<T>::copy_tensor_to_dev(const std::vector<Mat<T>> &tensor,
  * values may not be important like a temporal matrix.
  */
 template <typename T>
-T *EigenCuda<T>::initialize_matrix_mem(const Mat<T> &A, bool copy_to_device) const{
+T *EigenCuda<T>::initialize_matrix_mem(const Mat<T> &A,
+                                       bool copy_to_device) const {
 
   // size of the Matrices
   std::size_t size_A = A.size() * sizeof(T);
@@ -180,7 +181,8 @@ void EigenCuda<T>::gemmBatched(Shapes sh, const T **dA, const T **dB, T **dC,
  */
 template <typename T>
 void EigenCuda<T>::gemmStridedBatched(Shapes sh, Strides st, const T *dA,
-                                      const T *dB, T *dC, int batchCount) const{
+                                      const T *dB, T *dC,
+                                      int batchCount) const {
 
   // call gemm from cublas
   cublasStatus_t status;
@@ -268,7 +270,7 @@ Mat<T> EigenCuda<T>::dot(const Mat<T> &A, const Mat<T> &B) const {
 template <typename T>
 std::vector<Mat<T>>
 EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
-                                  const std::vector<Mat<T>> &tensor) const{
+                                  const std::vector<Mat<T>> &tensor) const {
   // Number of submatrices in the input tensor
   int batchCount = tensor.size();
 
@@ -333,7 +335,7 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
   cudaFree(dB);
   cudaFree(dC);
   free_tensor_memory(hA, batchCount);
-  free_tensor_memory(hC, batchCount);  
+  free_tensor_memory(hC, batchCount);
 
   return rs;
 }
@@ -351,7 +353,7 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
  */
 template <typename T>
 Mat<T> EigenCuda<T>::matrix_tensor(const Mat<T> &B,
-                                   std::vector<Mat<T>> &&tensor) const{
+                                   std::vector<Mat<T>> &&tensor) const {
   // Number of submatrices in the input tensor
   int batchCount = tensor.size();
 
