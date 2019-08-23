@@ -31,13 +31,6 @@ inline cudaError_t checkCuda(cudaError_t result) {
   return result;
 }
 
-// template<typename T>
-// struct DeviceP {
-//   T **_tensorA = nullptr;
-//   T **_tensorB = nullptr;
-//   T **_tensorC = nullptr;  
-// };
-  
 // Strides to batch gemm
 struct Strides {
   long long int stA;
@@ -92,8 +85,8 @@ public:
                                             const std::vector<Mat<T>> &tensor);
 
   // Perform a multiplication between a matrix and a tensor
-  std::vector<Mat<T>> right_matrix_tensor(const Mat<T> &A,
-                                          const std::vector<Mat<T>> &tensor) const;
+  std::vector<Mat<T>>
+  right_matrix_tensor(const Mat<T> &A, const std::vector<Mat<T>> &tensor) const;
 
   // Perform a multiplication between a matrix and a tensor
   Mat<T> matrix_tensor(const Mat<T> &A, std::vector<Mat<T>> &&tensor) const;
@@ -108,9 +101,6 @@ private:
   // Deallocate memory from the device
   void gpu_free(T *x) const;
 
-  // // Store the pointer to a tensor in device
-  // void set_device_pointer(T **, int index);
-  
   // Free the memory allocated for a tensor
   void free_tensor_memory(T *arr[], int batchCount) const;
 
@@ -144,10 +134,6 @@ private:
   T _beta = 0.;
   const T *_palpha = &_alpha;
   const T *_pbeta = &_beta;
-
-  // Cache tensor memory in device
-  // DeviceP<T> _dev;
-  
 };
 
 // Stack a vector of matrices as a matrix where is row contains a matrix
