@@ -102,6 +102,7 @@ void dot_product() {
   B << 5., 6., 7., 8.;
 
   Mat<double> C = EC.dot(A, B);
+  std::cout << "C is: " << C << "\n";
   std::cout << "sum dot: " << C.sum() << "\n";
   assert(abs(C.sum() - 134.) < 1e-8);
   std::cout << "dot product succeeded!\n";
