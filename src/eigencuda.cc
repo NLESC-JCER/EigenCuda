@@ -37,7 +37,7 @@ template <typename T> EigenCuda<T>::~EigenCuda() {
  * memory
  */
 template <typename T> void EigenCuda<T>::gpu_alloc(T **x, std::size_t n) const {
-  (_pinned) ? cudaMallocHost(x, n) : cudaMalloc(x, n);
+  (_pinned) ? cudaMallocHost(x, n) : cudaMallocManaged(x, n);
 }
 
 /*
@@ -296,9 +296,9 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
   const T **dA, **dB;
   T **dC;
   size_t size_batch = batchCount * sizeof(T *);
-  cudaMalloc(&dA, size_batch);
-  cudaMalloc(&dB, size_batch);
-  cudaMalloc(&dC, size_batch);
+  cudaMallocManaged(&dA, size_batch);
+  cudaMallocManaged(&dB, size_batch);
+  cudaMallocManaged(&dC, size_batch);
 
   // Copy the arrays of pointers from host to the device
   cudaMemcpyAsync(dA, hA, size_batch, cudaMemcpyHostToDevice, _stream);
