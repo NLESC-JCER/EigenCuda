@@ -313,6 +313,9 @@ std::vector<Mat<T>> EigenCuda<T>::right_matrix_tensor(
   // Vector containing the results
   std::vector<Mat<T>> rs(batchCount, Mat<T>::Zero(matrix.rows(), B.cols()));
 
+  // Wait for GPU to finish before accessing on host
+  cudaDeviceSynchronize();
+
   // Copy each array back to the device
   for (auto i = 0; i < batchCount; i++) {
     rs[i] = Eigen::Map<Mat<T>>(hC[i], matrix.rows(), B.cols());
