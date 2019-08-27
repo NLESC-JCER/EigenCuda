@@ -5,7 +5,8 @@ namespace eigencuda {
 /*
  * Removed all the allocated arrays from the device
  */
-template <typename T> EigenCuda<T>::~EigenCuda() {
+template <typename T>
+EigenCuda<T>::~EigenCuda() {
 
   // destroy handle
   cublasDestroy(_handle);
@@ -17,14 +18,16 @@ template <typename T> EigenCuda<T>::~EigenCuda() {
  * Allocate memory in the device using either pinned or pageable (default)
  * memory
  */
-template <typename T> void EigenCuda<T>::gpu_alloc(T **x, std::size_t n) const {
+template <typename T>
+void EigenCuda<T>::gpu_alloc(T **x, std::size_t n) const {
   (_pinned) ? cudaMallocHost(x, n) : cudaMalloc(x, n);
 }
 
 /*
  * Deallocate memory from the device
  */
-template <typename T> void EigenCuda<T>::gpu_free(T *x) const {
+template <typename T>
+void EigenCuda<T>::gpu_free(T *x) const {
   (_pinned) ? cudaFreeHost(x) : cudaFree(x);
 };
 
@@ -221,9 +224,8 @@ Mat<T> EigenCuda<T>::dot(const Mat<T> &A, const Mat<T> &B) const {
  * Finally, the tensor output is copy back to the main memory.
  */
 template <typename T>
-std::vector<Mat<T>>
-EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
-                                  const std::vector<Mat<T>> &tensor) const {
+std::vector<Mat<T>> EigenCuda<T>::right_matrix_tensor(
+    const Mat<T> &B, const std::vector<Mat<T>> &tensor) const {
   // Number of submatrices in the input tensor
   int batchCount = tensor.size();
 
@@ -296,4 +298,4 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
 // explicit instantiations
 template class EigenCuda<float>;
 template class EigenCuda<double>;
-} // namespace eigencuda
+}  // namespace eigencuda

@@ -130,6 +130,10 @@ class EigenCuda {
   const T *_pbeta = &_beta;
 };
 
+/*
+ * The TensorMatrix subclass caches the allocation of the tensor used
+ * for the matrix-matrix multiplication
+ */
 template <typename T>
 class TensorMatrix : public EigenCuda<T> {
 
@@ -137,6 +141,7 @@ class TensorMatrix : public EigenCuda<T> {
   // Deallocate the tensors
   ~TensorMatrix();
 
+  // Allocate the tensor used for the tensor matrix multiplications
   TensorMatrix(int batchCount, int dimA, int dimB, int dimC,
                bool pinned = false)
       : EigenCuda<T>{pinned}, _batchCount{batchCount} {
@@ -151,6 +156,12 @@ class TensorMatrix : public EigenCuda<T> {
     _tensorA = arr;
     _tensorB = brr;
     _tensorC = crr;
+
+    // Allocate the pointers of pointers in the device
+    size_t size_batch = _batchCount * sizeof(T *);
+    cudaMalloc(&_dA, size_batch);
+    cudaMalloc(&_dB, size_batch);
+    cudaMalloc(&_dC, size_batch);
   }
 
   // Perform a multiplication between a matrix and a tensor
@@ -164,6 +175,10 @@ class TensorMatrix : public EigenCuda<T> {
   T **_tensorA;
   T **_tensorB;
   T **_tensorC;
+
+  // Pointers of pointers in the device
+  const T **_dA, **_dB;
+  T **_dC;
 };
 }  // namespace eigencuda
 

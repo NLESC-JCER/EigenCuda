@@ -7,6 +7,9 @@ TensorMatrix<T>::~TensorMatrix() {
   this->free_tensor_memory(_tensorA, _batchCount);
   this->free_tensor_memory(_tensorB, _batchCount);
   this->free_tensor_memory(_tensorC, _batchCount);
+  cudaFree(_dA);
+  cudaFree(_dB);
+  cudaFree(_dC);
 }
 
 template <typename T>
@@ -29,32 +32,25 @@ std::vector<Mat<T>> TensorMatrix<T>::tensor_dot_matrix(
     _tensorB[i] = mtxB;
   }
 
-  // Allocate space in the device for the array of pointers
-  const T **dA, **dB;
-  T **dC;
-  size_t size_batch = _batchCount * sizeof(T *);
-  cudaMalloc(&dA, size_batch);
-  cudaMalloc(&dB, size_batch);
-  cudaMalloc(&dC, size_batch);
-
   // Copy the arrays of pointers from host to the device
-  cudaMemcpyAsync(dA, _tensorA, size_batch, cudaMemcpyHostToDevice,
+  size_t size_batch = _batchCount * sizeof(T *);
+  cudaMemcpyAsync(_dA, _tensorA, size_batch, cudaMemcpyHostToDevice,
                   this->_stream);
-  cudaMemcpyAsync(dB, _tensorB, size_batch, cudaMemcpyHostToDevice,
+  cudaMemcpyAsync(_dB, _tensorB, size_batch, cudaMemcpyHostToDevice,
                   this->_stream);
-  cudaMemcpyAsync(dC, _tensorC, size_batch, cudaMemcpyHostToDevice,
+  cudaMemcpyAsync(_dC, _tensorC, size_batch, cudaMemcpyHostToDevice,
                   this->_stream);
 
   // Call tensor matrix multiplication
   Shapes sh{matrix.rows(), matrix.cols(), B.rows(), B.cols(), matrix.rows()};
-  this->gemmBatched(sh, dA, dB, dC, _batchCount);
+  this->gemmBatched(sh, _dA, _dB, _dC, _batchCount);
 
   // Vector containing the results
   std::vector<Mat<T>> rs(_batchCount, Mat<T>::Zero(matrix.rows(), B.cols()));
   std::size_t size_out = matrix.rows() * B.cols() * sizeof(T);
 
   // Copy Array of pointers on the device to the host
-  cudaMemcpyAsync(_tensorC, dC, size_batch, cudaMemcpyDeviceToHost,
+  cudaMemcpyAsync(_tensorC, _dC, size_batch, cudaMemcpyDeviceToHost,
                   this->_stream);
 
   // Copy each array back to the device
@@ -69,9 +65,6 @@ std::vector<Mat<T>> TensorMatrix<T>::tensor_dot_matrix(
 
   // Deallocate all the memory from the device
   this->gpu_free(mtxB);
-  cudaFree(dA);
-  cudaFree(dB);
-  cudaFree(dC);
 
   return rs;
 }
