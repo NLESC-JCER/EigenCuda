@@ -19,23 +19,9 @@ void write_vector(std::vector<int> sizes,
   file.close();
 }
 
-template <typename T> void dot_benchmark(Mat<T> &A, Mat<T> &B, bool pinned) {
-  // chrono
-  std::chrono::time_point<std::chrono::system_clock> start, end;
-
-  start = std::chrono::system_clock::now();
-  eigencuda::EigenCuda<T> EC{pinned};
-  Mat<T> R = EC.dot(A, B);
-
-  // outputs
-  end = std::chrono::system_clock::now();
-  std::chrono::duration<double> elapsed_time = end - start;
-  std::cout << "Run time: " << elapsed_time.count() << " secs\n";
-}
-
 template <typename T>
-std::tuple<double, double>
-benchmark_right_matrix_tensor(Mat<T> &A, std::vector<Mat<T>> tensor) {
+std::tuple<double, double> benchmark_right_matrix_tensor(
+    Mat<T> &A, std::vector<Mat<T>> tensor) {
   // chrono
   std::chrono::time_point<std::chrono::system_clock> start, end;
 
@@ -75,12 +61,7 @@ void run_benchmark(std::vector<int> vs, bool pinned = false) {
     Mat<double> B = Mat<double>::Random(size, size + 20);
     Mat<double> C = Mat<double>::Random(size + 20, size);
 
-    std::string msg =
-        (pinned) ? "Pinned Data Transfer" : "Pageable Data Transfer";
     std::cout << "size: " << size << "\n";
-    std::cout << msg << "\n";
-
-    dot_benchmark<double>(A, B, pinned);
 
     // Benchmark for tensor product
     std::vector<Mat<double>> tensor;
@@ -91,20 +72,6 @@ void run_benchmark(std::vector<int> vs, bool pinned = false) {
     times.push_back(benchmark_right_matrix_tensor(C, tensor));
   }
   write_vector(vs, times);
-}
-
-void dot_product() {
-  eigencuda::EigenCuda<double> EC;
-  Mat<double> A = Mat<double>::Zero(2, 2);
-  Mat<double> B = Mat<double>::Zero(2, 2);
-
-  A << 1., 2., 3., 4.;
-  B << 5., 6., 7., 8.;
-
-  Mat<double> C = EC.dot(A, B);
-  std::cout << "sum dot: " << C.sum() << "\n";
-  assert(abs(C.sum() - 134.) < 1e-8);
-  std::cout << "dot product succeeded!\n";
 }
 
 void right_matrix_tensor() {
@@ -126,15 +93,6 @@ void right_matrix_tensor() {
   std::vector<Mat<double>> tensor{B, C, D};
   // Mat<double> rs = EC.matrix_tensor(A, std::move(tensor));
   std::vector<Mat<double>> rs = EC.right_matrix_tensor(A, tensor);
-
-  // std::cout << "cols 0: " << rs.col(0) << "\n";
-  // std::cout << "cols 1: " << rs.col(1) << "\n";
-  // std::cout << "cols 2: " << rs.col(2) << "\n";
-
-  // // Check results
-  // assert(abs(rs.col(0).sum() - 486.) < 1e-8);
-  // assert(abs(rs.col(1).sum() - 738.) < 1e-8);
-  // assert(abs(rs.col(1).sum() - 990.) < 1e-8);
 
   for (auto &x : rs) {
     std::cout << "result sum: " << x << "\n";

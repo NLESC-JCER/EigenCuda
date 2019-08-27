@@ -1,4 +1,5 @@
 #include "eigencuda.hpp"
+#include <iostream>
 
 namespace eigencuda {
 
@@ -10,11 +11,13 @@ TensorMatrix<T>::~TensorMatrix() {
   cudaFree(_dA);
   cudaFree(_dB);
   cudaFree(_dC);
+  cudaError_t err = cudaDeviceSynchronize();
+  std::cout << "final error: " << err << "\n";
 }
 
 template <typename T>
 std::vector<Mat<T>> TensorMatrix<T>::tensor_dot_matrix(
-    std::vector<Mat<T>> tensor, Mat<T> B) {
+    const std::vector<Mat<T>> &tensor, const Mat<T> &B) {
 
   // First submatrix from the tensor
   Mat<T> matrix = tensor[0];
