@@ -48,8 +48,10 @@ struct Shapes {
 
   Shapes(long int _a_rows, long int _a_cols, long int _b_rows, long int _b_cols,
          long int _c_rows)
-      : A_rows{static_cast<int>(_a_rows)}, A_cols{static_cast<int>(_a_cols)},
-        B_rows{static_cast<int>(_b_rows)}, B_cols{static_cast<int>(_b_cols)},
+      : A_rows{static_cast<int>(_a_rows)},
+        A_cols{static_cast<int>(_a_cols)},
+        B_rows{static_cast<int>(_b_rows)},
+        B_cols{static_cast<int>(_b_cols)},
         C_rows{static_cast<int>(_c_rows)} {}
 };
 
@@ -57,9 +59,10 @@ struct Shapes {
 template <typename T>
 using Mat = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
 
-template <typename T> class EigenCuda {
+template <typename T>
+class EigenCuda {
 
-public:
+ public:
   EigenCuda() {
     cublasCreate(&_handle);
     _err_stream = cudaStreamCreate(&_stream);
@@ -85,13 +88,10 @@ public:
                                             const std::vector<Mat<T>> &tensor);
 
   // Perform a multiplication between a matrix and a tensor
-  std::vector<Mat<T>>
-  right_matrix_tensor(const Mat<T> &A, const std::vector<Mat<T>> &tensor) const;
+  std::vector<Mat<T>> right_matrix_tensor(
+      const Mat<T> &A, const std::vector<Mat<T>> &tensor) const;
 
-  // Perform a multiplication between a matrix and a tensor
-  Mat<T> matrix_tensor(const Mat<T> &A, std::vector<Mat<T>> &&tensor) const;
-
-private:
+ private:
   // Allocate memory in the device
   void gpu_alloc(T **x, std::size_t n) const;
 
@@ -117,10 +117,6 @@ private:
   void gemmBatched(Shapes sh, const T **dA, const T **dB, T **dC,
                    int batchCount) const;
 
-  // Invoke the ?gemmStridedBatched function of CuBlas
-  void gemmStridedBatched(Shapes sh, Strides strides, const T *dA, const T *dB,
-                          T *dC, int batchCount) const;
-
   // Cuda variables
   cublasHandle_t _handle;
   bool _pinned = false;
@@ -136,9 +132,6 @@ private:
   const T *_pbeta = &_beta;
 };
 
-// Stack a vector of matrices as a matrix where is row contains a matrix
-template <typename T> Mat<T> stack(const std::vector<Mat<T>> &tensor);
+}  // namespace eigencuda
 
-} // namespace eigencuda
-
-#endif // EIGENCUDA_H_
+#endif  // EIGENCUDA_H_
