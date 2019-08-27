@@ -2,15 +2,16 @@
 
 namespace eigencuda {
 
-template <typename T> TensorMatrix<T>::~TensorMatrix() {
+template <typename T>
+TensorMatrix<T>::~TensorMatrix() {
   this->free_tensor_memory(_tensorA, _batchCount);
   this->free_tensor_memory(_tensorB, _batchCount);
   this->free_tensor_memory(_tensorC, _batchCount);
 }
 
 template <typename T>
-std::vector<Mat<T>>
-TensorMatrix<T>::tensor_dot_matrix(std::vector<Mat<T>> tensor, Mat<T> B) {
+std::vector<Mat<T>> TensorMatrix<T>::tensor_dot_matrix(
+    std::vector<Mat<T>> tensor, Mat<T> B) {
 
   // First submatrix from the tensor
   Mat<T> matrix = tensor[0];
@@ -78,4 +79,4 @@ TensorMatrix<T>::tensor_dot_matrix(std::vector<Mat<T>> tensor, Mat<T> B) {
 // explicit instantiations
 template class TensorMatrix<float>;
 template class TensorMatrix<double>;
-} // namespace eigencuda
+}  // namespace eigencuda

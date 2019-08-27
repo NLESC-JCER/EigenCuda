@@ -3,25 +3,6 @@
 namespace eigencuda {
 
 /*
- * Stack a vector of matrices as a single matrix, where each column corresponds
- * to a matrix.
- */
-template <typename T> Mat<T> stack(std::vector<Mat<T>> &&tensor) {
-
-  int rows = tensor[0].size(); // size of each matrix
-  int cols = tensor.size();    // number of matrices in tensor
-
-  // row major to save the tensor
-  Mat<T> rs = Mat<T>::Zero(rows, cols);
-
-  for (auto i = 0; i < cols; i++) {
-    rs.col(i) = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, 1>>(
-        tensor[i].data(), tensor[i].size());
-  }
-  return rs;
-}
-
-/*
  * Removed all the allocated arrays from the device
  */
 template <typename T> EigenCuda<T>::~EigenCuda() {
@@ -231,29 +212,6 @@ Mat<T> EigenCuda<T>::dot(const Mat<T> &A, const Mat<T> &B) const {
 }
 
 /*
- * \brief performs a matrix_1 * tensor * matrix_2 multiplication
- * \return matrix where each column is the result of the matrices
- * multiplication.
- *
- * Initially, it allocates memory and copy the matrices A and C together with
- * the tensor to the device. Also, the function allocates the result tensor Y
- * and a temporal matrix X.
- * This last matrix is not copy into the device because is initial value is not
- * relevant. Subsequently, the method iterates over each submatrix in `tensor`
- * and perform the following operations: X = tensor(i) * C Y(i) = A * X then the
- * final Y is copy back to main memory. This final matrix Y contains in each
- * column the result of the tensor operation. Also, notice that the matrix X is
- * never set to zero after each iteration because the gemm function perform the
- * matrix multiplication: R = alpha M * N + beta R where alpha and beta are two
- * scalar constants set to 1 and 0 respectively. Therefore, X is ALWAYS SET TO
- * ZERO BEFORE THE MATRIX MULTIPLICATION.
- */
-// template <typename T>
-// std::vector<Mat<T>>
-// EigenCuda<T>::triple_tensor_product(const Mat<T> &A, const Mat<T> &C,
-//                                     const std::vector<Mat<T>> &tensor) {
-
-/*
  * \brief Multiply a matrix B by a 3D tensor represented as a vector of
  * matrices.
  * \return vector of matrices representing the result
@@ -333,59 +291,6 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
   free_tensor_memory(hC, batchCount);
 
   return rs;
-}
-
-/*
- * \brief Multiply a matrix B by a 3D tensor represented as a vector of
- * matrices.
- \return a matrix where each column represent the result product.
- * Initially, it allocates memory and copy the matrix B and the tensor to the
- device.
- *  Also, the function allocates the result tensor Y.
- * The method iterates over each submatrix of the tensor computing:
- * output(i) = tensor(i) * B.
- * Finally, the tensor output is copy back to the main memory.
- */
-template <typename T>
-Mat<T> EigenCuda<T>::matrix_tensor(const Mat<T> &B,
-                                   std::vector<Mat<T>> &&tensor) const {
-  // Number of submatrices in the input tensor
-  int batchCount = tensor.size();
-
-  // Rows and cols of the submatrices in tensor
-  long int rows_matrix = tensor[0].rows();
-  long int cols_matrix = tensor[0].cols();
-
-  // Copy Matrix B to the device
-  const T *dB = initialize_matrix_mem(B);
-
-  // Stack the input vector
-  Mat<T> super_matrix = stack(std::move(tensor));
-
-  // Allocate memory in the device for the super matrix
-  const T *dA = initialize_matrix_mem(super_matrix);
-
-  // Allocate memory in the device for the result
-  T *dC;
-  long int dim_out = rows_matrix * B.cols();
-  size_t size_out = batchCount * static_cast<int>(dim_out) * sizeof(T);
-  gpu_alloc(&dC, size_out);
-
-  // Call the matrix multiplication
-  Shapes sh{rows_matrix, cols_matrix, B.rows(), B.cols(), rows_matrix};
-  Strides st{rows_matrix * cols_matrix, 0, dim_out};
-  gemmStridedBatched(sh, st, dA, dB, dC, batchCount);
-
-  // Vector containing the results
-  int rows = static_cast<int>(dim_out);
-  Mat<T> output = Mat<T>::Zero(rows, batchCount);
-
-  // copy array back to the host
-  T *hout = output.data();
-  cudaMemcpyAsync(hout, dC, size_out, cudaMemcpyDeviceToHost, _stream);
-  output = Eigen::Map<Mat<T>>(hout, rows, batchCount);
-
-  return output;
 }
 
 // explicit instantiations

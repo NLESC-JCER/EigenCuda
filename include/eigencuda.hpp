@@ -48,8 +48,10 @@ struct Shapes {
 
   Shapes(long int _a_rows, long int _a_cols, long int _b_rows, long int _b_cols,
          long int _c_rows)
-      : A_rows{static_cast<int>(_a_rows)}, A_cols{static_cast<int>(_a_cols)},
-        B_rows{static_cast<int>(_b_rows)}, B_cols{static_cast<int>(_b_cols)},
+      : A_rows{static_cast<int>(_a_rows)},
+        A_cols{static_cast<int>(_a_cols)},
+        B_rows{static_cast<int>(_b_rows)},
+        B_cols{static_cast<int>(_b_cols)},
         C_rows{static_cast<int>(_c_rows)} {}
 };
 
@@ -57,9 +59,10 @@ struct Shapes {
 template <typename T>
 using Mat = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
 
-template <typename T> class EigenCuda {
+template <typename T>
+class EigenCuda {
 
-public:
+ public:
   EigenCuda() {
     cublasCreate(&_handle);
     _err_stream = cudaStreamCreate(&_stream);
@@ -79,19 +82,11 @@ public:
   // Matrix matrix multiplication
   Mat<T> dot(const Mat<T> &A, const Mat<T> &B) const;
 
-  // Perform the triple matrix multiplication A * matrix * C, for the vector
-  // of matrices given by tensor
-  std::vector<Mat<T>> triple_tensor_product(const Mat<T> &A, const Mat<T> &C,
-                                            const std::vector<Mat<T>> &tensor);
-
   // Perform a multiplication between a matrix and a tensor
-  std::vector<Mat<T>>
-  right_matrix_tensor(const Mat<T> &A, const std::vector<Mat<T>> &tensor) const;
+  std::vector<Mat<T>> right_matrix_tensor(
+      const Mat<T> &A, const std::vector<Mat<T>> &tensor) const;
 
-  // Perform a multiplication between a matrix and a tensor
-  Mat<T> matrix_tensor(const Mat<T> &A, std::vector<Mat<T>> &&tensor) const;
-
-protected:
+ protected:
   // Allocate memory in the device
   void gpu_alloc(T **x, std::size_t n) const;
 
@@ -117,7 +112,6 @@ protected:
   void gemmBatched(Shapes sh, const T **dA, const T **dB, T **dC,
                    int batchCount) const;
 
-  // Invoke the ?gemmStridedBatched function of CuBlas
   void gemmStridedBatched(Shapes sh, Strides strides, const T *dA, const T *dB,
                           T *dC, int batchCount) const;
 
@@ -136,22 +130,22 @@ protected:
   const T *_pbeta = &_beta;
 };
 
-template <typename T> class TensorMatrix : public EigenCuda<T> {
+template <typename T>
+class TensorMatrix : public EigenCuda<T> {
 
-public:
+ public:
   // Deallocate the tensors
   ~TensorMatrix();
 
   TensorMatrix(int batchCount, int dimA, int dimB, int dimC,
                bool pinned = false)
-      : EigenCuda<T>{pinned},
-        _batchCount{batchCount}, _dimA{dimA}, _dimB{dimB}, _dimC{dimC} {
+      : EigenCuda<T>{pinned}, _batchCount{batchCount} {
 
     // Allocate space in the GPU
     T *arr[_batchCount], *brr[_batchCount], *crr[_batchCount];
-    EigenCuda<T>::gpu_alloc_tensor(arr, _dimA, _batchCount);
-    EigenCuda<T>::gpu_alloc_tensor(brr, _dimB, _batchCount);
-    EigenCuda<T>::gpu_alloc_tensor(crr, _dimC, _batchCount);
+    EigenCuda<T>::gpu_alloc_tensor(arr, dimA, _batchCount);
+    EigenCuda<T>::gpu_alloc_tensor(brr, dimB, _batchCount);
+    EigenCuda<T>::gpu_alloc_tensor(crr, dimC, _batchCount);
 
     // Store the allocated space
     _tensorA = arr;
@@ -162,22 +156,15 @@ public:
   // Perform a multiplication between a matrix and a tensor
   std::vector<Mat<T>> tensor_dot_matrix(std::vector<Mat<T>> tensor, Mat<T> B);
 
-private:
+ private:
   // Dimension of the tensor
   int _batchCount;
-  int _dimA;
-  int _dimB;
-  int _dimC;
 
   // Array of pointers to the memory in the device
   T **_tensorA;
   T **_tensorB;
   T **_tensorC;
 };
+}  // namespace eigencuda
 
-// Stack a vector of matrices as a matrix where is row contains a matrix
-template <typename T> Mat<T> stack(const std::vector<Mat<T>> &tensor);
-
-} // namespace eigencuda
-
-#endif // EIGENCUDA_H_
+#endif  // EIGENCUDA_H_
