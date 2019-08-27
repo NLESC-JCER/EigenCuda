@@ -136,30 +136,35 @@ protected:
   const T *_pbeta = &_beta;
 };
 
-template <typename T> class TensorMatrix: public EigenCuda<T> {
+template <typename T> class TensorMatrix : public EigenCuda<T> {
 
 public:
-  TensorMatrix(int batchCount, int dimA, int dimB, int dimC, bool pinned = false) :
-    EigenCuda<T>{pinned}, _batchCount{batchCount}, _dimA{dimA}, _dimB{dimB}, _dimC{dimC} {
+  // Deallocate the tensors
+  ~TensorMatrix();
 
-      // Allocate space in the GPU
-      T *arr[_batchCount], *brr[_batchCount], *crr[_batchCount];
-      EigenCuda<T>::gpu_alloc_tensor(arr, _dimA, _batchCount);
-      EigenCuda<T>::gpu_alloc_tensor(brr, _dimB, _batchCount);
-      EigenCuda<T>::gpu_alloc_tensor(crr, _dimC, _batchCount);
+  TensorMatrix(int batchCount, int dimA, int dimB, int dimC,
+               bool pinned = false)
+      : EigenCuda<T>{pinned},
+        _batchCount{batchCount}, _dimA{dimA}, _dimB{dimB}, _dimC{dimC} {
 
-      // Store the allocated space
-      _tensorA = arr;
-      _tensorB = brr;
-      _tensorC = crr;      
+    // Allocate space in the GPU
+    T *arr[_batchCount], *brr[_batchCount], *crr[_batchCount];
+    EigenCuda<T>::gpu_alloc_tensor(arr, _dimA, _batchCount);
+    EigenCuda<T>::gpu_alloc_tensor(brr, _dimB, _batchCount);
+    EigenCuda<T>::gpu_alloc_tensor(crr, _dimC, _batchCount);
+
+    // Store the allocated space
+    _tensorA = arr;
+    _tensorB = brr;
+    _tensorC = crr;
   }
-  
+
   // Perform a multiplication between a matrix and a tensor
   std::vector<Mat<T>> tensor_dot_matrix(std::vector<Mat<T>> tensor, Mat<T> B);
 
 private:
   // Dimension of the tensor
-  int  _batchCount;
+  int _batchCount;
   int _dimA;
   int _dimB;
   int _dimC;
@@ -168,10 +173,8 @@ private:
   T **_tensorA;
   T **_tensorB;
   T **_tensorC;
-  
-  
 };
-  
+
 // Stack a vector of matrices as a matrix where is row contains a matrix
 template <typename T> Mat<T> stack(const std::vector<Mat<T>> &tensor);
 

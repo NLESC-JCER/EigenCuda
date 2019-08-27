@@ -107,7 +107,6 @@ void dot_product() {
   std::cout << "dot product succeeded!\n";
 }
 
-
 void right_matrix_tensor() {
   // Define matrices and class to handle GPU resources
   eigencuda::EigenCuda<double> EC;
@@ -159,15 +158,19 @@ void tensor_matrix() {
   C << 9., 10., 11., 12., 13., 14.;
   D << 13., 14., 15., 16., 17., 18.;
   std::vector<Mat<double>> tensor{B, C, D};
-  
+
   // class to handle the GPU resources
   eigencuda::TensorMatrix<double> TM{3, 6, 6, 9};
   std::vector<Mat<double>> rs = TM.tensor_dot_matrix(tensor, A);
+  std::vector<Mat<double>> qs = TM.tensor_dot_matrix(tensor, A);
 
   for (auto &x : rs) {
     std::cout << "tensor: " << x << "\n";
   }
 
+  for (auto &x : qs) {
+    std::cout << "tensor: " << x << "\n";
+  }
 }
 
 int main() {
