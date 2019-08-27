@@ -75,10 +75,6 @@ void EigenCuda<T>::free_tensor_memory(T *arr[], int batchCount) const {
 }
 
 /*
- * Store the pointer to the device in memory
- */
-
-/*
  * Copy each component of the tensor to preallocated memory in the device
  */
 template <typename T>
@@ -94,7 +90,7 @@ void EigenCuda<T>::copy_tensor_to_dev(const std::vector<Mat<T>> &tensor,
 }
 
 /*
- * Allocate memory in the device for matrix A, then if if `copy_to_device`
+ * Allocate memory in the device for matrix A, then if `copy_to_device` is true
  * copy the array to the device. Sometimes it only neccesary to allocate
  * space in the device without copying the array because the initial
  * values may not be important like a temporal matrix.
@@ -127,8 +123,7 @@ T *EigenCuda<T>::initialize_matrix_mem(const Mat<T> &A,
 
 /*
  * Call the gemm function from cublas, resulting in the multiplication of the
- * two matrices with identifiers id_A and id_B. The result is stored in
- * a Matrix (pointer) with identifier id_C.
+ * two matrices.
  */
 template <typename T>
 void EigenCuda<T>::gemm(Shapes sh, const T *dA, const T *dB, T *dC) const {
@@ -348,7 +343,7 @@ EigenCuda<T>::right_matrix_tensor(const Mat<T> &B,
  device.
  *  Also, the function allocates the result tensor Y.
  * The method iterates over each submatrix of the tensor computing:
- * output(i) = tensor(i) * A.
+ * output(i) = tensor(i) * B.
  * Finally, the tensor output is copy back to the main memory.
  */
 template <typename T>
