@@ -23,13 +23,12 @@ std::vector<Mat<T>> TensorMatrix<T>::tensor_dot_matrix(
   this->copy_tensor_to_dev(tensor, _tensorA);
 
   // represent the matrix B as a tensor where all the submatrices are the same
-  T *mtxB;
   size_t size_B = B.size() * sizeof(T);
-  this->gpu_alloc(&mtxB, size_B);
-  cudaMemcpyAsync(mtxB, B.data(), size_B, cudaMemcpyHostToDevice,
+  this->gpu_alloc(&_tensorB[0], size_B);
+  cudaMemcpyAsync(_tensorB[0], B.data(), size_B, cudaMemcpyHostToDevice,
                   this->_stream);
-  for (auto i = 0; i < _batchCount; i++) {
-    _tensorB[i] = mtxB;
+  for (auto i = 1; i < _batchCount; i++) {
+    _tensorB[i] = _tensorB[0];
   }
 
   // Copy the arrays of pointers from host to the device
@@ -62,9 +61,6 @@ std::vector<Mat<T>> TensorMatrix<T>::tensor_dot_matrix(
     rs[i] = Eigen::Map<Mat<T>>(hout, matrix.rows(), B.cols());
     ;
   }
-
-  // Deallocate all the memory from the device
-  this->gpu_free(mtxB);
 
   return rs;
 }
