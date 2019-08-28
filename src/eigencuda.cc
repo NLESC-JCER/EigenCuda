@@ -186,29 +186,6 @@ Mat<T> EigenCuda<T>::dot(const Mat<T> &A, const Mat<T> &B) const {
 }
 
 /*
- * \brief performs a matrix_1 * tensor * matrix_2 multiplication
- * \return matrix where each column is the result of the matrices
- * multiplication.
- *
- * Initially, it allocates memory and copy the matrices A and C together with
- * the tensor to the device. Also, the function allocates the result tensor Y
- * and a temporal matrix X.
- * This last matrix is not copy into the device because is initial value is not
- * relevant. Subsequently, the method iterates over each submatrix in `tensor`
- * and perform the following operations: X = tensor(i) * C Y(i) = A * X then the
- * final Y is copy back to main memory. This final matrix Y contains in each
- * column the result of the tensor operation. Also, notice that the matrix X is
- * never set to zero after each iteration because the gemm function perform the
- * matrix multiplication: R = alpha M * N + beta R where alpha and beta are two
- * scalar constants set to 1 and 0 respectively. Therefore, X is ALWAYS SET TO
- * ZERO BEFORE THE MATRIX MULTIPLICATION.
- */
-// template <typename T>
-// std::vector<Mat<T>>
-// EigenCuda<T>::triple_tensor_product(const Mat<T> &A, const Mat<T> &C,
-//                                     const std::vector<Mat<T>> &tensor) {
-
-/*
  * \brief Multiply a matrix B by a 3D tensor represented as a vector of
  * matrices.
  * \return vector of matrices representing the result

@@ -60,8 +60,11 @@ void run_benchmark(std::vector<int> vs, bool pinned = false) {
 
     Mat<double> B = Mat<double>::Random(size, size + 20);
 
+   std::string msg =
+        (pinned) ? "Pinned Data Transfer" : "Pageable Data Transfer";    
     std::cout << "size: " << size << "\n";
-
+    std::cout << msg << "\n";
+    
     // Benchmark for tensor product
     std::vector<Mat<double>> tensor;
     for (auto i = 0; i < 10; i++) {
