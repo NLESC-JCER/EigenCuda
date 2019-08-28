@@ -42,7 +42,6 @@ std::tuple<double, double> benchmark_right_matrix_tensor(
   start = std::chrono::system_clock::now();
   eigencuda::EigenCuda<double> EC;
   std::vector<Mat<double>> rs = EC.right_matrix_tensor(A, tensor);
-  EC.tensor_matrix(A, tensor);
   end = std::chrono::system_clock::now();
   elapsed_time = end - start;
   auto gpu_time = elapsed_time.count();
