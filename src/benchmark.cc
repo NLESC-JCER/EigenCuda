@@ -26,6 +26,15 @@ std::tuple<double, double> benchmark_right_matrix_tensor(
   std::chrono::time_point<std::chrono::system_clock> start, end;
   std::chrono::duration<double> elapsed_time;
  
+  // Cuda
+  start = std::chrono::system_clock::now();
+  eigencuda::EigenCuda<double> EC;
+  std::vector<Mat<double>> rs = EC.right_matrix_tensor(A, tensor);
+  end = std::chrono::system_clock::now();
+  elapsed_time = end - start;
+  auto gpu_time = elapsed_time.count();
+  std::cout << "GPU tensor matrix product: " << gpu_time << " secs\n";  
+
   // Call Eigen
   start = std::chrono::system_clock::now();
   std::vector<Mat<double>> qs;
@@ -37,16 +46,7 @@ std::tuple<double, double> benchmark_right_matrix_tensor(
   elapsed_time = end - start;
   auto cpu_time = elapsed_time.count();
   std::cout << "CPU tensor tensor product: " << cpu_time << " secs\n";
-
-  // Cuda
-  start = std::chrono::system_clock::now();
-  eigencuda::EigenCuda<double> EC;
-  std::vector<Mat<double>> rs = EC.right_matrix_tensor(A, tensor);
-  end = std::chrono::system_clock::now();
-  elapsed_time = end - start;
-  auto gpu_time = elapsed_time.count();
-  std::cout << "GPU tensor matrix product: " << gpu_time << " secs\n";
-
+  
   return std::make_tuple(gpu_time, cpu_time);
 }
 
@@ -101,8 +101,8 @@ void right_matrix_tensor() {
 
 int main() {
 
-  bool pinned = true;
-  std::vector<int> vs{100, 200, 500, 1000, 1500};
+  bool pinned = false;
+  std::vector<int> vs{100, 200, 500};
 
   run_benchmark(vs, pinned);
   // right_matrix_tensor();
