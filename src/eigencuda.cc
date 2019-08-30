@@ -69,7 +69,8 @@ void EigenCuda<T>::copy_tensor_to_dev(const std::vector<Mat<T>> &tensor,
   // Send each matrix one by one
   for (unsigned i = 0; i < tensor.size(); i++) {
     const T *hA = tensor[i].data();
-    checkCuda(cudaMemcpyAsync(arr[i], hA, size_A, cudaMemcpyHostToDevice, _stream));
+    checkCuda(
+        cudaMemcpyAsync(arr[i], hA, size_A, cudaMemcpyHostToDevice, _stream));
   }
 }
 
@@ -232,9 +233,12 @@ std::vector<Mat<T>> EigenCuda<T>::right_matrix_tensor(
   checkCuda(cudaMalloc(&dC, size_batch));
 
   // Copy the arrays of pointers from host to the device
-  checkCuda(cudaMemcpyAsync(dA, hA, size_batch, cudaMemcpyHostToDevice, _stream));
-  checkCuda(cudaMemcpyAsync(dB, hB, size_batch, cudaMemcpyHostToDevice, _stream));
-  checkCuda(cudaMemcpyAsync(dC, hC, size_batch, cudaMemcpyHostToDevice, _stream));
+  checkCuda(
+      cudaMemcpyAsync(dA, hA, size_batch, cudaMemcpyHostToDevice, _stream));
+  checkCuda(
+      cudaMemcpyAsync(dB, hB, size_batch, cudaMemcpyHostToDevice, _stream));
+  checkCuda(
+      cudaMemcpyAsync(dC, hC, size_batch, cudaMemcpyHostToDevice, _stream));
 
   // Call tensor matrix multiplication
   Shapes sh{matrix.rows(), matrix.cols(), B.rows(), B.cols(), matrix.rows()};
@@ -245,13 +249,15 @@ std::vector<Mat<T>> EigenCuda<T>::right_matrix_tensor(
   std::size_t size_out = matrix.rows() * B.cols() * sizeof(T);
 
   // Copy Array of pointers on the device to the host
-  checkCuda(cudaMemcpyAsync(hC, dC, size_batch, cudaMemcpyDeviceToHost, _stream));
+  checkCuda(
+      cudaMemcpyAsync(hC, dC, size_batch, cudaMemcpyDeviceToHost, _stream));
 
   // Copy each array back to the device
   for (auto i = 0; i < batchCount; i++) {
     T *hout = rs[i].data();
     T *dout = hC[i];
-    checkCuda(cudaMemcpyAsync(hout, dout, size_out, cudaMemcpyDeviceToHost, _stream));
+    checkCuda(
+        cudaMemcpyAsync(hout, dout, size_out, cudaMemcpyDeviceToHost, _stream));
   }
   // Deallocate all the memory from the device
   gpu_free(mtxB);
