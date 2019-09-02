@@ -114,8 +114,7 @@ class EigenCuda {
   void gemm(Shapes shapes, const T *dA, const T *dB, T *dC) const;
 
   // Invoke the ?gemmBatched function of CuBlas.
-  void gemmBatched(Shapes sh, const T **dA, const T **dB, T **dC,
-                   int batchCount) const;
+  void gemmBatched(Shapes sh, T **dA, T **dB, T **dC, int batchCount) const;
 
   // Cuda variables
   cublasHandle_t _handle;
