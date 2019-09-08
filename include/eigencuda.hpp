@@ -4,6 +4,7 @@
 #include <Eigen/Core>
 #include <Eigen/Dense>
 #include <cublas_v2.h>
+#include <curand.h>
 #include <vector>
 
 /**
@@ -67,8 +68,7 @@ class EigenCuda {
     cudaStreamCreate(&_stream);
   }
   EigenCuda(bool pinned) : _pinned{pinned} {
-    cublasCreate(&_handle);
-    cudaStreamCreate(&_stream);
+    EigenCuda{};
   }
 
   // Deallocate both the handler and allocated arrays
