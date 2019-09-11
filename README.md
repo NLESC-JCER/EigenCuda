@@ -18,9 +18,7 @@ cmake -H. -Bbuild  -DCMAKE_BUILD_TYPE=Debug && cmake --build build
 ## Dependencies
 
 This packages assumes that you have installed the following packages:
-
   
-  * [Cxxopts](https://github.com/jarro2783/cxxopts)
   * [Cudatoolkit](https://anaconda.org/anaconda/cudatoolkit)
   * [Eigen3](http://eigen.tuxfamily.org/index.php?title=Main_Page)
 
