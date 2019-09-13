@@ -2,9 +2,6 @@
 
 namespace eigencuda {
 
-/*
- * Removed all the allocated arrays from the device
- */
 template <typename T>
 EigenCuda<T>::~EigenCuda() {
 
@@ -31,6 +28,19 @@ void EigenCuda<T>::gpu_free(T *x) const {
   (_pinned) ? checkCuda(cudaFreeHost(x)) : checkCuda(cudaFree(x));
 };
 
+/*
+ * Check if the available memory is enough to compute the system
+ */
+template <typename T>
+void EigenCuda<T>::check_memory() const {
+  size_t *free, total;
+  cudaMallocManaged(&free, sizeof(size_t));
+  cudaMallocManaged(&total, sizeof(size_t));  
+  checkCuda(cudaMemGetInfo(free, dtotal));
+  cudaFree(free);
+  cudaFree(total);
+}
+  
 /*
  * Allocate memory in the device for matrix A.
  */

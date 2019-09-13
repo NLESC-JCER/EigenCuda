@@ -60,9 +60,7 @@ class EigenCuda {
     cublasCreate(&_handle);
     cudaStreamCreate(&_stream);
   }
-  EigenCuda(bool pinned) : _pinned{pinned} {
-    EigenCuda{};
-  }
+  EigenCuda(bool pinned) : _pinned{pinned} { EigenCuda{}; }
 
   // Deallocate both the handler and allocated arrays
   ~EigenCuda();
@@ -84,6 +82,9 @@ class EigenCuda {
       const Mat<T> &A, const std::vector<Mat<T>> &tensor) const;
 
  private:
+  // Check available memory
+  void check_memory() const;
+
   // Allocate memory in the device
   void gpu_alloc(T **x, std::size_t n) const;
 
