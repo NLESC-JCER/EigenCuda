@@ -160,14 +160,14 @@ std::vector<Mat<T>> EigenCuda<T>::right_matrix_tensor(
   // Call tensor matrix multiplication
   for (auto i=0; i < batchCount; i++) {
     // Copy tensor component to the device
-    checkCuda(cudaMemcpyAsync(dA, tensor[i].data, size_C, cudaMemcpyHostToDevice, _stream));
+    checkCuda(cudaMemcpyAsync(dA, tensor[i].data(), size_C, cudaMemcpyHostToDevice, _stream));
     
     // matrix multiplication
     gemm(sh, dA, dB, dC);
 
     // Copy the result to the host
     T *hout = rs[i].data();
-    checkCuda(cudaMemcpyAsync(hout, dc, size_C, cudaMemcpyDeviceToHost, _stream));
+    checkCuda(cudaMemcpyAsync(hout, dC, size_C, cudaMemcpyDeviceToHost, _stream));
   }
 
   // Deallocate all the memory from the device
@@ -194,8 +194,8 @@ std::vector<Mat<T>> EigenCuda<T>::triple_tensor_product(
 
   // First submatrix from the tensor
   Mat<T> matrix = tensor[0];
-  size_t size_B = 
-  T *dB = initialize_matrix_mem(size_A);  
+  size_t size_B = matrix.size() * sizeof(T);
+  T *dB = initialize_matrix_mem(size_B);
 
   // Intermediate result X
   std::size_t size_X = A.rows() * matrix.cols() * sizeof(T);
@@ -214,7 +214,7 @@ std::vector<Mat<T>> EigenCuda<T>::triple_tensor_product(
 
   for (auto i=0; i < batchCount; i++) {
     // tensor component
-    checkCuda(cudaMemcpyAsync(dB, tensor[i].data, size_B, cudaMemcpyHostToDevice, _stream));
+    checkCuda(cudaMemcpyAsync(dB, tensor[i].data(), size_B, cudaMemcpyHostToDevice, _stream));
 
     // Call the first tensor matrix multiplication
     gemm(sh1, dA, dB, dX);
