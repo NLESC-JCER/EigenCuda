@@ -5,6 +5,7 @@
 #include <Eigen/Dense>
 #include <cublas_v2.h>
 #include <curand.h>
+#include <sstream>
 #include <vector>
 
 /**
@@ -83,7 +84,7 @@ class EigenCuda {
 
  private:
   // Check available memory
-  void check_memory() const;
+  void check_available_memory(size_t required) const;
 
   // Allocate memory in the device
   void gpu_alloc(T **x, std::size_t n) const;

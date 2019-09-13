@@ -1,4 +1,5 @@
 #include "eigencuda.hpp"
+#include <sstream>
 
 namespace eigencuda {
 
@@ -32,11 +33,25 @@ void EigenCuda<T>::gpu_free(T *x) const {
  * Check if the available memory is enough to compute the system
  */
 template <typename T>
-void EigenCuda<T>::check_memory() const {
+void EigenCuda<T>::check_available_memory(size_t requested) const {
   size_t *free, *total;
+
+  // Use Unified memory
   cudaMallocManaged(&free, sizeof(size_t));
   cudaMallocManaged(&total, sizeof(size_t));  
   checkCuda(cudaMemGetInfo(free, total));
+
+  std::ostringstream oss;
+  oss << "There were requested : " << requested << "bytes int the device\n";  
+  oss << "Device Free memory (bytes): " << *free << "\nDevice total Memory (bytes): "  << *total << "\n";
+
+  // Raise an error if there is not enough total or free memory in the device
+  if (requested > *free)  {
+    oss << "There is not enough memory in the Device!\n";
+    throw std::runtime_error(oss.str());
+  }
+  
+  // Release memory
   cudaFree(free);
   cudaFree(total);
 }
@@ -150,16 +165,22 @@ std::vector<Mat<T>> EigenCuda<T>::right_matrix_tensor(
   // First submatrix from the tensor
   Mat<T> matrix = tensor[0];
 
-  // Initialize memory for tensor components
+  // sizes of the matrices to allocated in the device
   size_t size_A = matrix.size() * sizeof(T);
+  size_t size_B = B.size() * sizeof(T);
+  size_t size_C = matrix.rows() * B.cols() * sizeof(T);  
+
+  // Check if there is enough available memory
+  check_available_memory(size_A + size_B + size_C);
+  
+  // Initialize memory for tensor components
   T *dA = initialize_matrix_mem(size_A);
+
+  // Allocate memory for the final result array C
+  T *dC = initialize_matrix_mem(size_C);
   
   // Copy Matrix B to the device
   T *dB = initialize_and_copy(B);
-
-  // Allocate memory for the final result array C
-  size_t size_C = matrix.rows() * B.cols() * sizeof(T);
-  T *dC = initialize_matrix_mem(size_C);
 
   // Shapes of the resulting matrices
   Shapes sh{matrix.rows(), matrix.cols(), B.rows(), B.cols(), matrix.rows()};
@@ -198,21 +219,28 @@ std::vector<Mat<T>> EigenCuda<T>::triple_tensor_product(
   // Number of submatrices in the input tensor
   int batchCount = tensor.size();
 
+  // First submatrix from the tensor
+  Mat<T> matrix = tensor[0];
+  
+  // sizes of the matrices to allocated in the device
+  size_t size_A = A.size() * sizeof(T);
+  size_t size_B = matrix.size() * sizeof(T);
+  size_t size_C = C.size() * sizeof(T);  
+  std::size_t size_X = A.rows() * matrix.cols() * sizeof(T);
+  std::size_t size_Y = A.rows() * C.cols() * sizeof(T);
+
+  // Check if there is enough available memory
+  check_available_memory(size_A + size_B + size_C + size_X + size_Y);  
+  
   // Copy Matrix B to the device
   T *dA = initialize_and_copy(A);
   T *dC = initialize_and_copy(C);
-
-  // First submatrix from the tensor
-  Mat<T> matrix = tensor[0];
-  size_t size_B = matrix.size() * sizeof(T);
   T *dB = initialize_matrix_mem(size_B);
 
   // Intermediate result X
-  std::size_t size_X = A.rows() * matrix.cols() * sizeof(T);
   T *dX = initialize_matrix_mem(size_X) ;
   
   // Final result array Y
-  std::size_t size_Y = A.rows() * C.cols() * sizeof(T);
   T *dY = initialize_matrix_mem(size_Y);
 
   // Shapes of the matrices
