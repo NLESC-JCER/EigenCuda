@@ -31,13 +31,6 @@ inline cudaError_t checkCuda(cudaError_t result) {
   return result;
 }
 
-// Strides to batch gemm
-struct Strides {
-  long long int stA;
-  long long int stB;
-  long long int stC;
-};
-
 // Structure with the sizes to call ?GEMM
 struct Shapes {
   int A_rows;
@@ -94,26 +87,17 @@ class EigenCuda {
   // Allocate memory in the device
   void gpu_alloc(T **x, std::size_t n) const;
 
-  // Allocate memory for a tensor in the device;
-  void gpu_alloc_tensor(T *arr[], int shape, int batchCount) const;
-
   // Deallocate memory from the device
   void gpu_free(T *x) const;
 
-  // Free the memory allocated for a tensor
-  void free_tensor_memory(T *arr[], int batchCount) const;
+  // Allocate matrix in the device
+  T *initialize_matrix_mem(size_t size_A) const;
 
-  // Copy a tensor to preallocated memory in the device
-  void copy_tensor_to_dev(const std::vector<Mat<T>> &tensor, T *arr[]) const;
-
-  // Allocate memory in the device, optionally copying the array to the GPU
-  T *initialize_matrix_mem(const Mat<T> &A, bool copy_to_device = true) const;
+  // Allocate memory for a matrix and copy it to the device
+  T *initialize_and_copy(const Mat<T> &A) const;
 
   // Invoke the ?gemm function of cublas
   void gemm(Shapes shapes, const T *dA, const T *dB, T *dC) const;
-
-  // Invoke the ?gemmBatched function of CuBlas.
-  void gemmBatched(Shapes sh, T **dA, T **dB, T **dC, int batchCount) const;
 
   // Cuda variables
   cublasHandle_t _handle;
@@ -121,12 +105,6 @@ class EigenCuda {
 
   // Asynchronous stream
   cudaStream_t _stream;
-
-  // Scalar constanst for calling blas
-  T _alpha = 1.;
-  T _beta = 0.;
-  const T *_palpha = &_alpha;
-  const T *_pbeta = &_beta;
 };
 
 }  // namespace eigencuda
