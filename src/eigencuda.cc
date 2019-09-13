@@ -33,10 +33,10 @@ void EigenCuda<T>::gpu_free(T *x) const {
  */
 template <typename T>
 void EigenCuda<T>::check_memory() const {
-  size_t *free, total;
+  size_t *free, *total;
   cudaMallocManaged(&free, sizeof(size_t));
   cudaMallocManaged(&total, sizeof(size_t));  
-  checkCuda(cudaMemGetInfo(free, dtotal));
+  checkCuda(cudaMemGetInfo(free, total));
   cudaFree(free);
   cudaFree(total);
 }
