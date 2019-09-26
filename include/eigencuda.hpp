@@ -5,26 +5,25 @@
 #include <Eigen/Dense>
 #include <cublas_v2.h>
 #include <curand.h>
+#include <iostream>
+#include <memory>
 #include <sstream>
 #include <vector>
 
-/**
- * \brief Perform matrix-matrix multiplication in a GPU
+/*
+ * \brief Perform Tensor-matrix multiplications in a GPU
  *
  * The `EigenCuda` class handles the allocation and deallocation of arrays on
- * the GPU. Firstly, to perform a matrix multiplication, memory must be
- * allocated in the device to contain the involved matrices. The
- * `initialize_matrix_mem` method firstly allocates memory by calling the
- * `gpu_alloc` method that allocates either pinned or pageable memory, see:
- * https://devblogs.nvidia.com/how-optimize-data-transfers-cuda-cc/ Then the
- * array could be optionally copy to the device.
+ * the GPU.
  */
 
 namespace eigencuda {
+// Unique pointer with custom delete function
+using uniq_double = std::unique_ptr<double, void (*)(double *)>;
 
 inline cudaError_t checkCuda(cudaError_t result) {
 // Check Cuda error
-#if defined(DEBUG) || defined(_DEBUG)
+#if defined(DEBUG)
   if (result != cudaSuccess) {
     std::cerr << "CUDA Runtime Error: " << cudaGetErrorString(result) << "\n";
   }
@@ -32,78 +31,58 @@ inline cudaError_t checkCuda(cudaError_t result) {
   return result;
 }
 
-// Structure with the sizes to call ?GEMM
-struct Shapes {
-  int A_rows;
-  int A_cols;
-  int B_rows;
-  int B_cols;
-  int C_rows;
+// Data of the matrix stored in the GPU
+class CudaMatrix {
+ public:
+  int size() const { return _rows * _cols; };
+  int rows() const { return _rows; };
+  int cols() const { return _cols; };
+  double *ptr() const { return _ptr.get(); };
 
-  Shapes(long int _a_rows, long int _a_cols, long int _b_rows, long int _b_cols,
-         long int _c_rows)
-      : A_rows{static_cast<int>(_a_rows)},
-        A_cols{static_cast<int>(_a_cols)},
-        B_rows{static_cast<int>(_b_rows)},
-        B_cols{static_cast<int>(_b_cols)},
-        C_rows{static_cast<int>(_c_rows)} {}
+  CudaMatrix(uniq_double &&ptr, long int nrows, long int ncols)
+      : _ptr{std::move(ptr)},
+        _rows{static_cast<int>(nrows)},
+        _cols{static_cast<int>(ncols)} {}
+
+ private:
+  uniq_double _ptr;
+  int _rows;
+  int _cols;
 };
 
-// col Major for CUDA
-template <typename T>
-using Mat = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
+// Delete allocated memory in the GPU
+void free_mem_in_gpu(double *x);
 
-template <typename T>
 class EigenCuda {
-
  public:
   EigenCuda() {
     cublasCreate(&_handle);
     cudaStreamCreate(&_stream);
   }
-  EigenCuda(bool pinned) : _pinned{pinned} { EigenCuda{}; }
-
-  // Deallocate both the handler and allocated arrays
   ~EigenCuda();
 
-  // Remove the copy operations
   EigenCuda(const EigenCuda &) = delete;
   EigenCuda &operator=(const EigenCuda &) = delete;
 
-  // Matrix matrix multiplication
-  Mat<T> dot(const Mat<T> &A, const Mat<T> &B) const;
+  // Allocate memory for a matrix and copy it to the device
+  uniq_double copy_matrix_to_gpu(const Eigen::MatrixXd &matrix) const;
 
-  // Perform the triple matrix multiplication A * matrix * C, for the vector
-  // of matrices given by tensor
-  std::vector<Mat<T>> triple_tensor_product(const Mat<T> &A, const Mat<T> &C,
-                                            const std::vector<Mat<T>> &tensor);
+  // Matrix matrix multiplication
+  Eigen::MatrixXd matrix_mult(const Eigen::MatrixXd &A, const Eigen::MatrixXd &B) const;
 
   // Perform a multiplication between a matrix and a tensor
-  std::vector<Mat<T>> right_matrix_tensor(
-      const Mat<T> &A, const std::vector<Mat<T>> &tensor) const;
+  void right_matrix_tensor_mult(std::vector<Eigen::MatrixXd> &&tensor,
+                                const Eigen::MatrixXd &A) const;
 
  private:
-  // Check available memory
-  void check_available_memory(size_t required) const;
-
-  // Allocate memory in the device
-  void gpu_alloc(T **x, std::size_t n) const;
-
-  // Deallocate memory from the device
-  void gpu_free(T *x) const;
-
-  // Allocate matrix in the device
-  T *initialize_matrix_mem(size_t size_A) const;
-
-  // Allocate memory for a matrix and copy it to the device
-  T *initialize_and_copy(const Mat<T> &A) const;
+  void check_available_memory_in_gpu(size_t required) const;
+  uniq_double alloc_matrix_in_gpu(size_t size_matrix) const;
 
   // Invoke the ?gemm function of cublas
-  void gemm(Shapes shapes, const T *dA, const T *dB, T *dC) const;
+  void gemm(const CudaMatrix &A, const CudaMatrix &B, CudaMatrix &C) const;
 
-  // Cuda variables
+  // The cublas handles allocates hardware resources on the host and device.
   cublasHandle_t _handle;
-  bool _pinned = false;
 
   // Asynchronous stream
   cudaStream_t _stream;

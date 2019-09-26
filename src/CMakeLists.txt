@@ -1,6 +1,5 @@
 
 add_library(eigencuda eigencuda.cc)
-add_executable(benchmark benchmark.cc)
 
 target_include_directories(eigencuda
   PUBLIC
@@ -8,7 +7,7 @@ target_include_directories(eigencuda
   ${CUDA_INCLUDE_DIRS}
 )
 
-set_target_properties(benchmark eigencuda
+set_target_properties(eigencuda
   PROPERTIES
   CXX_STANDARD 14
   CXX_STANDARD_REQUIRED ON
@@ -20,16 +19,10 @@ target_compile_options(eigencuda
 )
 
 target_link_libraries(eigencuda
-  PRIVATE
+  PUBLIC
     Eigen3::Eigen
     ${CUDA_LIBRARIES}
     ${CUDA_CUBLAS_LIBRARIES}
-  )
-
-target_link_libraries(benchmark
-  PRIVATE
-    Eigen3::Eigen
-    eigencuda
   )
 
 if(ENABLE_TESTING)
