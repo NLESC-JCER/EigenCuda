@@ -39,7 +39,7 @@ assert(abs(C.sum() - 134.) < 1e-8);
 ```
 
 ### Tensor Matrix Multiplication
-```
+```cpp
 #include "eigencuda.hpp"
 
 eigencuda::EigenCuda EC;
