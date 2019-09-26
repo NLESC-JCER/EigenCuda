@@ -41,32 +41,30 @@ assert(abs(C.sum() - 134.) < 1e-8);
 ### Tensor Matrix Multiplication
 ```
 #include "eigencuda.hpp"
-  // Call the class to handle GPU resources
-  eigencuda::EigenCuda EC;
 
-  // Call matrix multiplication GPU
-  Eigen::MatrixXd A = Eigen::MatrixXd::Zero(2, 2);
-  Eigen::MatrixXd B = Eigen::MatrixXd::Zero(3, 2);
-  Eigen::MatrixXd C = Eigen::MatrixXd::Zero(3, 2);
-  Eigen::MatrixXd D = Eigen::MatrixXd::Zero(3, 2);
-  Eigen::MatrixXd X = Eigen::MatrixXd::Zero(3, 2);
-  Eigen::MatrixXd Y = Eigen::MatrixXd::Zero(3, 2);
-  Eigen::MatrixXd Z = Eigen::MatrixXd::Zero(3, 2);
+eigencuda::EigenCuda EC;
 
-  // Define matrices
-  A << 1., 2., 3., 4.;
-  B << 5., 6., 7., 8., 9., 10.;
-  C << 9., 10., 11., 12., 13., 14.;
-  D << 13., 14., 15., 16., 17., 18.;
-  X << 23., 34., 31., 46., 39., 58.;
-  Y << 39., 58., 47., 70., 55., 82.;
-  Z << 55., 82., 63., 94., 71., 106.;
+Eigen::MatrixXd A = Eigen::MatrixXd::Zero(2, 2);
+Eigen::MatrixXd B = Eigen::MatrixXd::Zero(3, 2);
+Eigen::MatrixXd C = Eigen::MatrixXd::Zero(3, 2);
+Eigen::MatrixXd D = Eigen::MatrixXd::Zero(3, 2);
+Eigen::MatrixXd X = Eigen::MatrixXd::Zero(3, 2);
+Eigen::MatrixXd Y = Eigen::MatrixXd::Zero(3, 2);
+Eigen::MatrixXd Z = Eigen::MatrixXd::Zero(3, 2);
 
-  std::vector<Eigen::MatrixXd> tensor{B, C, D};
-  EC.right_matrix_tensor_mult(std::move(tensor), A);
+A << 1., 2., 3., 4.;
+B << 5., 6., 7., 8., 9., 10.;
+C << 9., 10., 11., 12., 13., 14.;
+D << 13., 14., 15., 16., 17., 18.;
+X << 23., 34., 31., 46., 39., 58.;
+Y << 39., 58., 47., 70., 55., 82.;
+Z << 55., 82., 63., 94., 71., 106.;
 
-  // Expected results
-  assert(X.isApprox(tensor[0]));
-  assert(Y.isApprox(tensor[1]));
-  assert(Z.isApprox(tensor[2]));
-``
+std::vector<Eigen::MatrixXd> tensor{B, C, D};
+EC.right_matrix_tensor_mult(std::move(tensor), A);
+
+// Expected results
+assert(X.isApprox(tensor[0]));
+assert(Y.isApprox(tensor[1]));
+assert(Z.isApprox(tensor[2]));
+```
