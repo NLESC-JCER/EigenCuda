@@ -1,6 +1,6 @@
 # EigenCuda
 
-Offload the [Eigen3](http://eigen.tuxfamily.org/index.php?title=Main_Page) matrix matrix multiplacation to GPU
+Offload the [Eigen3](http://eigen.tuxfamily.org/index.php?title=Main_Page) matrix matrix multiplacation to an Nvidia GPU
 using [cublas](https://docs.nvidia.com/cuda/cublas/index.html).
 
 ## CMake Installation
@@ -26,20 +26,13 @@ This packages assumes that you have installed the following packages:
 ```cpp
 #include "eigencuda.hpp"
 
-using eigencuda::Mat;
-
-eigencuda::EigenCuda<double> EC;
-Mat<double> A = Mat<double>::Zero(2, 2);
-Mat<double> B = Mat<double>::Zero(2, 2);
+eigencuda::EigenCuda EC;
+Eigen::MatrixXd A = Eigen::MatrixXd::Zero(2, 2);
+Eigen::MatrixXd B = Eigen::MatrixXd::Zero(2, 2);
 
 A << 1., 2., 3., 4.;
 B << 5., 6., 7., 8.;
 
-Mat<double> C = EC.dot(A, B);
+Eigen::MatrixXd C = EC.matrix_mult(A, B);
 assert(abs(C.sum() - 134.) < 1e-8);
-```
-where `Mat` is defined as :
-```cpp
-template <typename T>
-using Mat = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
 ```

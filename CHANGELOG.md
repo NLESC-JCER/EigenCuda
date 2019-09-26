@@ -1,5 +1,18 @@
 # Change log
 
+# [0.3.0] 26/09/2019
+### Added
+ - Smart pointers to handle cuda resources
+ - New CudaMatrix class
+ - Use Eigen::MatrixXd
+ - Check available memory in the GPU before computing
+
+### Removed
+ - Template class, implementation only for double available
+ - Triple tensor product
+ - Shapes struct
+
+
 # [0.2.0] 27/08/2019
 ### Added
  - Tensor matrix multiplacation using [gemmbatched](https://docs.nvidia.com/cuda/cublas/index.html#cublas-lt-t-gt-gemmbatched).
