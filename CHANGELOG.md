@@ -1,5 +1,11 @@
 # Change log
 
+# [0.4.0] 04/10/2019
+### Changed
+  - Renamed `EigenCuda` to `CudaPipeline`
+   - Moved all the allocation to the smart pointers inside `CudaMatrix`
+
+
 # [0.3.0] 26/09/2019
 ### Added
  - Smart pointers to handle cuda resources

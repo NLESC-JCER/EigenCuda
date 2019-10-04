@@ -13,14 +13,11 @@
 /*
  * \brief Perform Tensor-matrix multiplications in a GPU
  *
- * The `EigenCuda` class handles the allocation and deallocation of arrays on
+ * The `CudaPipeline` class handles the allocation and deallocation of arrays on
  * the GPU.
  */
 
 namespace eigencuda {
-// Unique pointer with custom delete function
-using uniq_double = std::unique_ptr<double, void (*)(double *)>;
-
 inline cudaError_t checkCuda(cudaError_t result) {
 // Check Cuda error
 #if defined(DEBUG)
@@ -37,46 +34,71 @@ class CudaMatrix {
   int size() const { return _rows * _cols; };
   int rows() const { return _rows; };
   int cols() const { return _cols; };
-  double *ptr() const { return _ptr.get(); };
+  double *pointer() const { return _pointer.get(); };
 
-  CudaMatrix(uniq_double &&ptr, long int nrows, long int ncols)
-      : _ptr{std::move(ptr)},
-        _rows{static_cast<int>(nrows)},
-        _cols{static_cast<int>(ncols)} {}
+  CudaMatrix(const Eigen::MatrixXd &matrix, const cudaStream_t &stream)
+      : _rows{static_cast<int>(matrix.rows())},
+        _cols{static_cast<int>(matrix.cols())} {
+    size_t size_matrix = this->size() * sizeof(double);
+    _pointer = std::move(alloc_matrix_in_gpu(size_matrix));
+    cudaError_t err =
+        cudaMemcpyAsync(_pointer.get(), matrix.data(), size_matrix,
+                        cudaMemcpyHostToDevice, stream);
+    if (err != 0) {
+      throw std::runtime_error("Error copy arrays to device");
+    }
+  }
+
+  // Unique pointer with custom delete function
+  using double_unique_ptr = std::unique_ptr<double, void (*)(double *)>;
 
  private:
-  uniq_double _ptr;
+  friend class CudaPipeline;
+
+  CudaMatrix(long int nrows, long int ncols)
+      : _rows{static_cast<int>(nrows)}, _cols{static_cast<int>(ncols)} {
+    size_t size_matrix = this->size() * sizeof(double);
+    _pointer = std::move(alloc_matrix_in_gpu(size_matrix));
+  }
+
+  double_unique_ptr alloc_matrix_in_gpu(size_t size_matrix) const;
+
+  double_unique_ptr _pointer{nullptr,
+                             [](double *x) { checkCuda(cudaFree(x)); }};
   int _rows;
   int _cols;
 };
 
-// Delete allocated memory in the GPU
 void free_mem_in_gpu(double *x);
 
-class EigenCuda {
+/* \brief The CudaPipeline class offload Eigen operations to an *Nvidia* GPU
+ * using the CUDA language. The Cublas handle is the context manager for all the
+ * resources needed by Cublas. While a stream is a queue of sequential
+ * operations executed in the Nvidia device.
+ */
+class CudaPipeline {
  public:
-  EigenCuda() {
+  CudaPipeline() {
     cublasCreate(&_handle);
     cudaStreamCreate(&_stream);
   }
-  ~EigenCuda();
+  ~CudaPipeline();
 
-  EigenCuda(const EigenCuda &) = delete;
-  EigenCuda &operator=(const EigenCuda &) = delete;
-
-  // Allocate memory for a matrix and copy it to the device
-  uniq_double copy_matrix_to_gpu(const Eigen::MatrixXd &matrix) const;
-
-  // Matrix matrix multiplication
-  Eigen::MatrixXd matrix_mult(const Eigen::MatrixXd &A, const Eigen::MatrixXd &B) const;
+  CudaPipeline(const CudaPipeline &) = delete;
+  CudaPipeline &operator=(const CudaPipeline &) = delete;
 
   // Perform a multiplication between a matrix and a tensor
-  void right_matrix_tensor_mult(std::vector<Eigen::MatrixXd> &&tensor,
+  void right_matrix_tensor_mult(std::vector<Eigen::MatrixXd> &tensor,
                                 const Eigen::MatrixXd &A) const;
 
+  // Perform matrix1 * matrix2
+  Eigen::MatrixXd matrix_mult(const Eigen::MatrixXd &A,
+                              const Eigen::MatrixXd &B) const;
+
+  const cudaStream_t &get_stream() const { return _stream; };
+
  private:
-  void check_available_memory_in_gpu(size_t required) const;
-  uniq_double alloc_matrix_in_gpu(size_t size_matrix) const;
+  void throw_if_not_enough_memory_in_gpu(size_t required) const;
 
   // Invoke the ?gemm function of cublas
   void gemm(const CudaMatrix &A, const CudaMatrix &B, CudaMatrix &C) const;
