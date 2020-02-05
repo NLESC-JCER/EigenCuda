@@ -47,3 +47,6 @@ lib/
 
 # HDF5
 *.hdf5
+
+# visual code
+.vscode
