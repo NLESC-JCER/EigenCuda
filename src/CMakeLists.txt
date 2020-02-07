@@ -1,5 +1,5 @@
 
-add_library(eigencuda eigencuda.cc)
+add_library(eigencuda eigencuda.cc cudapipeline.cc)
 
 target_include_directories(eigencuda
   PUBLIC

@@ -1,22 +1,72 @@
 #include "eigencuda.hpp"
 
 namespace eigencuda {
-CudaPipeline::~CudaPipeline() {
 
-  // destroy handle
-  cublasDestroy(_handle);
-  // destroy stream
-  cudaStreamDestroy(_stream);
+cudaError_t checkCuda(cudaError_t result) {
+#if defined(DEBUG)
+  if (result != cudaSuccess) {
+    std::cerr << "CUDA Runtime Error: " << cudaGetErrorString(result) << "\n";
+  }
+#endif
+  return result;
 }
 
-void CudaPipeline::throw_if_not_enough_memory_in_gpu(
+Index count_available_gpus() {
+  int count;
+  cudaError_t err = cudaGetDeviceCount(&count);
+  return 0 ? (err != cudaSuccess) : Index(count);
+}
+
+CudaMatrix::CudaMatrix(const Eigen::MatrixXd &matrix,
+                       const cudaStream_t &stream)
+    : _rows{static_cast<Index>(matrix.rows())},
+      _cols{static_cast<Index>(matrix.cols())} {
+  _data = alloc_matrix_in_gpu(size_matrix());
+  _stream = stream;
+  cudaError_t err = cudaMemcpyAsync(_data.get(), matrix.data(), size_matrix(),
+                                    cudaMemcpyHostToDevice, stream);
+  if (err != 0) {
+    throw std::runtime_error("Error copy arrays to device");
+  }
+}
+
+CudaMatrix::CudaMatrix(Index nrows, Index ncols, const cudaStream_t &stream)
+    : _rows{static_cast<Index>(nrows)}, _cols{static_cast<Index>(ncols)} {
+  _data = alloc_matrix_in_gpu(size_matrix());
+  _stream = stream;
+}
+
+CudaMatrix::operator Eigen::MatrixXd() const {
+  Eigen::MatrixXd result = Eigen::MatrixXd::Zero(this->rows(), this->cols());
+  checkCuda(cudaMemcpyAsync(result.data(), this->data(), this->size_matrix(),
+                            cudaMemcpyDeviceToHost, this->_stream));
+  return result;
+}
+
+void CudaMatrix::copy_to_gpu(const Eigen::MatrixXd &A) {
+  size_t size_A = static_cast<Index>(A.size()) * sizeof(double);
+  checkCuda(cudaMemcpyAsync(this->data(), A.data(), size_A,
+                            cudaMemcpyHostToDevice, _stream));
+}
+
+CudaMatrix::Unique_ptr_to_GPU_data CudaMatrix::alloc_matrix_in_gpu(
+    size_t size_arr) const {
+  double *dmatrix;
+  throw_if_not_enough_memory_in_gpu(size_arr);
+  checkCuda(cudaMalloc(&dmatrix, size_arr));
+  Unique_ptr_to_GPU_data dev_ptr(dmatrix,
+                                 [](double *x) { checkCuda(cudaFree(x)); });
+  return dev_ptr;
+}
+
+void CudaMatrix::throw_if_not_enough_memory_in_gpu(
     size_t requested_memory) const {
   size_t free, total;
   checkCuda(cudaMemGetInfo(&free, &total));
 
   std::ostringstream oss;
   oss << "There were requested : " << requested_memory
-      << "bytes int the device\n";
+      << "bytes Index the device\n";
   oss << "Device Free memory (bytes): " << free
       << "\nDevice total Memory (bytes): " << total << "\n";
 
@@ -25,104 +75,6 @@ void CudaPipeline::throw_if_not_enough_memory_in_gpu(
     oss << "There is not enough memory in the Device!\n";
     throw std::runtime_error(oss.str());
   }
-}
-
-/*
- * Allocate memory in the device for matrix A.
- */
-CudaMatrix::double_unique_ptr CudaMatrix::alloc_matrix_in_gpu(
-    size_t size_matrix) const {
-
-  // Pointer in the device
-  double *dmatrix;
-  checkCuda(cudaMalloc(&dmatrix, size_matrix));
-  double_unique_ptr dev_ptr(dmatrix, [](double *x) { checkCuda(cudaFree(x)); });
-  return dev_ptr;
-}
-
-/*
- * Call the gemm function from cublas, resulting in the multiplication of the
- * two matrices.
- */
-void CudaPipeline::gemm(const CudaMatrix &A, const CudaMatrix &B,
-                        CudaMatrix &C) const {
-
-  // Scalar constanst for calling blas
-  double alpha = 1.;
-  double beta = 0.;
-  const double *palpha = &alpha;
-  const double *pbeta = &beta;
-
-  if ((A.cols() != B.rows())) {
-    throw std::runtime_error("Shape mismatch in Cublas gemm");
-  }
-
-  cublasDgemm(_handle, CUBLAS_OP_N, CUBLAS_OP_N, A.rows(), B.cols(), A.cols(),
-              palpha, A.pointer(), A.rows(), B.pointer(), B.rows(), pbeta,
-              C.pointer(), C.rows());
-}
-
-/*
- * \brief Perform a Tensor3D matrix multiplication
- */
-void CudaPipeline::right_matrix_tensor_mult(
-    std::vector<Eigen::MatrixXd> &tensor, const Eigen::MatrixXd &B) const {
-  // First submatrix from the tensor
-  const Eigen::MatrixXd &submatrix = tensor[0];
-
-  // sizes of the matrices to allocated in the device
-  size_t size_A = submatrix.size() * sizeof(double);
-  size_t size_B = B.size() * sizeof(double);
-  size_t size_C = submatrix.rows() * B.cols() * sizeof(double);
-  throw_if_not_enough_memory_in_gpu(size_A + size_B + size_C);
-
-  // Matrix in the Cuda device
-
-  CudaMatrix matrixA(submatrix.rows(), submatrix.cols());
-  CudaMatrix matrixB{B, _stream};
-  CudaMatrix matrixC(submatrix.rows(), B.cols());
-
-  // Call tensor matrix multiplication
-  for (auto i = 0; i < static_cast<int>(tensor.size()); i++) {
-    // Copy tensor component to the device
-    checkCuda(cudaMemcpyAsync(matrixA.pointer(), tensor[i].data(), size_C,
-                              cudaMemcpyHostToDevice, _stream));
-
-    // matrix multiplication
-    gemm(matrixA, matrixB, matrixC);
-
-    // Copy the result to the host
-    double *hout = tensor[i].data();
-    checkCuda(cudaMemcpyAsync(hout, matrixC.pointer(), size_C,
-                              cudaMemcpyDeviceToHost, _stream));
-  }
-}
-
-/*
- * \brief Perform a Tensor3D matrix multiplication
- */
-Eigen::MatrixXd CudaPipeline::matrix_mult(const Eigen::MatrixXd &A,
-                                          const Eigen::MatrixXd &B) const {
-
-  // sizes of the matrices to allocated in the device
-  size_t size_A = A.size() * sizeof(double);
-  size_t size_B = B.size() * sizeof(double);
-  size_t size_C = A.rows() * B.cols() * sizeof(double);
-  throw_if_not_enough_memory_in_gpu(size_A + size_B + size_C);
-
-  // Matrix in the Cuda device
-  CudaMatrix matrixA{A, _stream};
-  CudaMatrix matrixB{B, _stream};
-  CudaMatrix matrixC{A.rows(), B.cols()};
-
-  // matrix multiplication
-  gemm(matrixA, matrixB, matrixC);
-
-  // Copy the result to the host
-  Eigen::MatrixXd result = Eigen::MatrixXd::Zero(A.rows(), matrixC.cols());
-  checkCuda(cudaMemcpyAsync(result.data(), matrixC.pointer(), size_C,
-                            cudaMemcpyDeviceToHost, _stream));
-  return result;
 }
 
 }  // namespace eigencuda
