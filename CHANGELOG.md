@@ -1,15 +1,10 @@
 # Change log
 
-# [0.5.0] 10/02/2020
+# [0.4.0] 10/02/2020
 ### Changed
- - Split the memory managment from the cublas invocation
- - Removed unused headers
-
-# [0.4.0] 04/10/2019
-### Changed
-  - Renamed `EigenCuda` to `CudaPipeline`
+  - Split the memory managment (`CudaMatrix`) from the cublas invocation (`CudaPipeline`)
   - Moved all the allocation to the smart pointers inside `CudaMatrix`
-
+ - Removed unused headers
 
 # [0.3.0] 26/09/2019
 ### Added
