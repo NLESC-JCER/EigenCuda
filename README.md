@@ -1,6 +1,6 @@
 # EigenCuda
 
-Offload the [Eigen3](http://eigen.tuxfamily.org/index.php?title=Main_Page) matrix matrix multiplacation to an Nvidia GPU
+Offload the [Eigen3](http://eigen.tuxfamily.org/index.php?title=Main_Page) matrix matrix multiplication to an Nvidia GPU
 using [cublas](https://docs.nvidia.com/cuda/cublas/index.html).
 
 ## CMake Installation
