@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3660936.svg)](https://doi.org/10.5281/zenodo.3660936)
+
 # EigenCuda
 
 Offload the [Eigen3](http://eigen.tuxfamily.org/index.php?title=Main_Page) matrix matrix multiplication to an Nvidia GPU
