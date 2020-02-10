@@ -1,0 +1,24 @@
+# YAML 1.2
+---
+abstract: "Offload Eigen matrix-matrix multiplacations to an Nvidia GPU"
+authors: 
+  -
+    family-names: Zapata
+    given-names: Felipe
+    orcid: "https://orcid.org/0000-0001-8286-677X"
+  -
+    family-names: Renaud
+    given-names: Nicolas
+    orcid: "https://orcid.org/0000-0001-9589-2694"
+cff-version: "1.0.3"
+date-released: 2020-02-10
+keywords: 
+  - Eigen
+  - GPU
+  - "Linear Algebra"
+  - "C++"
+license: "Apache-2.0"
+message: "If you use this software, please cite it using these metadata."
+title: "Eigencuda"
+version: "v0.0.2"
+...

@@ -1,0 +1,22 @@
+{
+    "creators": [
+        {
+            "name": "Zapata, Felipe",
+            "orcid": "0000-0001-8286-677X"
+        },
+        {
+            "name": "Renaud, Nicolas",
+	    "orcid": "0000-0001-9589-2694"
+        },
+    ],
+    "keywords": [
+        "Eigen",
+        "GPU",
+	"Linear Algebra",
+        "C++"
+    ],
+    "license": {
+        "id": "Apache-2.0"
+    },
+    "title": "Eigencuda"
+}
