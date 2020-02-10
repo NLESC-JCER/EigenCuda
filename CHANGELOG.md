@@ -2,7 +2,7 @@
 
 # [0.4.0] 10/02/2020
 ### Changed
-  - Split the memory management (`CudaMatrix`) from the CUBLAS invocation (`CudaPipeline`)
+  - Split the memory management (`CudaMatrix`) from the [CUBLAS](https://docs.nvidia.com/cuda/cublas/index.html) invocation (`CudaPipeline`)
   - Moved all the allocation to the smart pointers inside `CudaMatrix`
  - Removed unused headers
 
