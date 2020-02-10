@@ -1,4 +1,4 @@
-#include "eigencuda.hpp"
+#include "cudamatrix.hpp"
 
 namespace eigencuda {
 

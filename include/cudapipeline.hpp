@@ -1,7 +1,7 @@
 #ifndef CUDA_PIPELINE__H
 #define CUDA_PIPELINE__H
 
-#include "eigencuda.hpp"
+#include "cudamatrix.hpp"
 
 /*
  * \brief Perform Tensor-matrix multiplications in a GPU

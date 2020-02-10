@@ -1,6 +1,6 @@
 #define BOOST_TEST_MODULE eigen_cuda
 
-#include "eigencuda.hpp"
+#include "cudamatrix.hpp"
 #include "cudapipeline.hpp"
 #include <boost/test/unit_test.hpp>
 
