@@ -1,6 +1,6 @@
 # YAML 1.2
 ---
-abstract: "Offload Eigen matrix-matrix multiplacations to an Nvidia GPU"
+abstract: "Offload Eigen matrix-matrix multiplications to an Nvidia GPU"
 authors: 
   -
     family-names: Zapata
