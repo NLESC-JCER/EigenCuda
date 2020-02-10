@@ -26,23 +26,13 @@ This packages assumes that you have installed the following packages:
 ### Matrix Multiplication
 ```cpp
 #include "eigencuda.hpp"
+#include "cudapipeline.hpp"
 
-eigencuda::EigenCuda EC;
-Eigen::MatrixXd A = Eigen::MatrixXd::Zero(2, 2);
-Eigen::MatrixXd B = Eigen::MatrixXd::Zero(2, 2);
+using eigencuda::CudaPipeline;
+using eigencuda::CudaMatrix;
 
-A << 1., 2., 3., 4.;
-B << 5., 6., 7., 8.;
-
-Eigen::MatrixXd C = EC.matrix_mult(A, B);
-assert(abs(C.sum() - 134.) < 1e-8);
-```
-
-### Tensor Matrix Multiplication
-```cpp
-#include "eigencuda.hpp"
-
-eigencuda::EigenCuda EC;
+  // Call the class to handle GPU resources
+  CudaPipeline cuda_pip;
 
 Eigen::MatrixXd A = Eigen::MatrixXd::Zero(2, 2);
 Eigen::MatrixXd B = Eigen::MatrixXd::Zero(3, 2);
@@ -52,6 +42,7 @@ Eigen::MatrixXd X = Eigen::MatrixXd::Zero(3, 2);
 Eigen::MatrixXd Y = Eigen::MatrixXd::Zero(3, 2);
 Eigen::MatrixXd Z = Eigen::MatrixXd::Zero(3, 2);
 
+// Define matrices
 A << 1., 2., 3., 4.;
 B << 5., 6., 7., 8., 9., 10.;
 C << 9., 10., 11., 12., 13., 14.;
@@ -61,10 +52,19 @@ Y << 39., 58., 47., 70., 55., 82.;
 Z << 55., 82., 63., 94., 71., 106.;
 
 std::vector<Eigen::MatrixXd> tensor{B, C, D};
-EC.right_matrix_tensor_mult(std::move(tensor), A);
+std::vector<Eigen::MatrixXd> results(3, Eigen::MatrixXd::Zero(3, 2));
+CudaMatrix cuma_A{A, cuda_pip.get_stream()};
+CudaMatrix cuma_B{3, 2, cuda_pip.get_stream()};
+CudaMatrix cuma_C{3, 2, cuda_pip.get_stream()};
 
+for (Index i = 0; i < 3; i++) {
+  cuma_B.copy_to_gpu(tensor[i]);
+  cuda_pip.gemm(cuma_B, cuma_A, cuma_C);
+  results[i] = cuma_C;
+}
 // Expected results
-assert(X.isApprox(tensor[0]));
-assert(Y.isApprox(tensor[1]));
-assert(Z.isApprox(tensor[2]));
+bool pred_1 = X.isApprox(results[0]);
+bool pred_2 = Y.isApprox(results[1]);
+bool pred_3 = Z.isApprox(results[2]);
+}
 ```
