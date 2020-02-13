@@ -4,8 +4,8 @@
 #include "cudapipeline.hpp"
 #include <boost/test/unit_test.hpp>
 
-using eigencuda::CudaPipeline;
 using eigencuda::CudaMatrix;
+using eigencuda::CudaPipeline;
 using eigencuda::Index;
 
 BOOST_AUTO_TEST_CASE(create_cudamatrix) {
@@ -29,6 +29,25 @@ BOOST_AUTO_TEST_CASE(create_cudamatrix) {
 
   // Expected results
   BOOST_TEST(X.isApprox(result));
+}
+
+BOOST_AUTO_TEST_CASE(matrix_multiplication) {
+
+  Index dim = 200;
+  Eigen::MatrixXd A = Eigen::MatrixXd::Random(dim, dim);
+  Eigen::MatrixXd B = Eigen::MatrixXd::Random(dim, dim);
+
+  CudaPipeline cuda_pip;
+  CudaMatrix cuma_A{A, cuda_pip.get_stream()};
+  CudaMatrix cuma_B{B, cuda_pip.get_stream()};
+  CudaMatrix cuma_C{dim, dim, cuda_pip.get_stream()};
+
+  cuda_pip.gemm(cuma_A, cuma_B, cuma_C);
+
+  Eigen::MatrixXd C = cuma_C;
+  Eigen::MatrixXd result = A * B;
+
+  BOOST_TEST(C.isApprox(result));
 }
 
 BOOST_AUTO_TEST_CASE(right_matrix_multiplication) {
@@ -82,4 +101,3 @@ BOOST_AUTO_TEST_CASE(wrong_shape_cublas) {
   BOOST_REQUIRE_THROW(cuda_pip.gemm(cuma_A, cuma_B, cuma_C),
                       std::runtime_error);
 }
-
