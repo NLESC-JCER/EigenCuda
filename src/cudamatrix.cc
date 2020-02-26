@@ -3,11 +3,9 @@
 namespace eigencuda {
 
 cudaError_t checkCuda(cudaError_t result) {
-#if defined(DEBUG)
   if (result != cudaSuccess) {
     std::cerr << "CUDA Runtime Error: " << cudaGetErrorString(result) << "\n";
   }
-#endif
   return result;
 }
 
@@ -54,9 +52,9 @@ CudaMatrix::Unique_ptr_to_GPU_data CudaMatrix::alloc_matrix_in_gpu(
     size_t size_arr) const {
   double *dmatrix;
   throw_if_not_enough_memory_in_gpu(size_arr);
-  checkCuda(cudaMalloc(&dmatrix, size_arr));
+  checkCuda(cudaHostAlloc(&dmatrix, size_arr, 0));
   Unique_ptr_to_GPU_data dev_ptr(dmatrix,
-                                 [](double *x) { checkCuda(cudaFree(x)); });
+                                 [](double *x) { checkCuda(cudaFreeHost(x)); });
   return dev_ptr;
 }
 

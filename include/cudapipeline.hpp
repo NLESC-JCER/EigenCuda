@@ -2,6 +2,7 @@
 #define CUDA_PIPELINE__H
 
 #include "cudamatrix.hpp"
+#include "cudatensor.hpp"
 
 /*
  * \brief Perform Tensor-matrix multiplications in a GPU
@@ -13,8 +14,8 @@
 namespace eigencuda {
 
 /* \brief The CudaPipeline class offload Eigen operations to an *Nvidia* GPU
- * using the CUDA language. The Cublas handle is the context manager for all the
- * resources needed by Cublas. While a stream is a queue of sequential
+ * using the CUDA language. The Cublas handle is the context manager for alxl
+ * the resources needed by Cublas. While a stream is a queue of sequential
  * operations executed in the Nvidia device.
  */
 class CudaPipeline {
@@ -30,6 +31,7 @@ class CudaPipeline {
 
   // Invoke the ?gemm function of cublas
   void gemm(const CudaMatrix &A, const CudaMatrix &B, CudaMatrix &C) const;
+  void gemmbatch(const CudaTensor &A, const CudaTensor &B, CudaTensor &C) const;
 
   const cudaStream_t &get_stream() const { return _stream; };
 
