@@ -1,5 +1,7 @@
 
-add_library(eigencuda cudamatrix.cc cudapipeline.cc)
+add_library(eigencuda cudamatrix.cc cudapipeline.cc memory_manager.cc)
+
+add_executable(contraction contraction.cc)
 
 target_include_directories(eigencuda
   PUBLIC
@@ -24,6 +26,13 @@ target_link_libraries(eigencuda
     ${CUDA_LIBRARIES}
     ${CUDA_CUBLAS_LIBRARIES}
   )
+
+  target_link_libraries(contraction
+  PUBLIC
+    eigencuda
+    cutensor
+  )
+
 
 if(ENABLE_TESTING)
   add_subdirectory(tests)

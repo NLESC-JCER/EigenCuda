@@ -1,6 +1,7 @@
 #ifndef EIGENCUDA_H_
 #define EIGENCUDA_H_
 
+#include "memory_manager.hpp"
 #include <Eigen/Core>
 #include <Eigen/Dense>
 #include <cublas_v2.h>
@@ -9,7 +10,6 @@
 #include <memory>
 #include <sstream>
 #include <vector>
-
 /*
  * \brief Perform Tensor-matrix multiplications in a GPU
  *
@@ -18,11 +18,6 @@
  */
 
 namespace eigencuda {
-
-cudaError_t checkCuda(cudaError_t result);
-
-using Index = Eigen::Index;
-Index count_available_gpus();
 
 class CudaMatrix {
  public:
@@ -53,7 +48,7 @@ class CudaMatrix {
 
   // Attributes of the matrix in the device
   Unique_ptr_to_GPU_data _data{nullptr,
-                               [](double *x) { checkCuda(cudaFree(x)); }};
+                               [](double *x) { eigencuda::checkCuda(cudaFree(x)); }};
   cudaStream_t _stream = nullptr;
   Index _rows;
   Index _cols;
