@@ -3,6 +3,15 @@
 
 namespace eigencuda {
 
+cudaError_t checkCuda(cudaError_t result) {
+#if defined(DEBUG)
+  if (result != cudaSuccess) {
+    std::cerr << "CUDA Runtime Error: " << cudaGetErrorString(result) << "\n";
+  }
+#endif
+  return result;
+}
+
 Index count_available_gpus() {
   int count;
   cudaError_t err = cudaGetDeviceCount(&count);
