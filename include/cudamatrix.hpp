@@ -1,10 +1,7 @@
 #ifndef EIGENCUDA_H_
 #define EIGENCUDA_H_
 
-#include "memory_manager.hpp"
-#include <Eigen/Core>
-#include <Eigen/Dense>
-#include <cublas_v2.h>
+#include "cudatensorbase.hpp"
 #include <curand.h>
 #include <iostream>
 #include <memory>
@@ -19,9 +16,9 @@
 
 namespace eigencuda {
 
-class CudaMatrix {
+class CudaMatrix : CudaTensorBase {
  public:
-  Index size() const { return _rows * _cols; };
+  Index size() const override { return _rows * _cols; };
   Index rows() const { return _rows; };
   Index cols() const { return _cols; };
   double *data() const { return _data.get(); };
@@ -37,12 +34,6 @@ class CudaMatrix {
   void copy_to_gpu(const Eigen::MatrixXd &A);
 
  private:
-  size_t size_matrix() const { return this->size() * sizeof(double); }
-
-  // Attributes of the matrix in the device
-  Unique_ptr_to_GPU_data _data{
-      nullptr, [](double *x) { eigencuda::checkCuda(cudaFree(x)); }};
-  cudaStream_t _stream = nullptr;
   Index _rows;
   Index _cols;
 };

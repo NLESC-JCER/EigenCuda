@@ -1,5 +1,5 @@
 
-add_library(eigencuda cudamatrix.cc cudapipeline.cc memory_manager.cc)
+add_library(eigencuda cudamatrix.cc cudapipeline.cc cudatensor.cc cudatensorbase.cc)
 
 add_executable(contraction contraction.cc)
 

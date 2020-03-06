@@ -6,9 +6,9 @@ CudaMatrix::CudaMatrix(const Eigen::MatrixXd &matrix,
                        const cudaStream_t &stream)
     : _rows{static_cast<Index>(matrix.rows())},
       _cols{static_cast<Index>(matrix.cols())} {
-  _data = eigencuda::alloc_tensor_in_gpu(size_matrix());
+  _data = this->alloc_tensor_in_gpu(size_tensor());
   _stream = stream;
-  cudaError_t err = cudaMemcpyAsync(_data.get(), matrix.data(), size_matrix(),
+  cudaError_t err = cudaMemcpyAsync(_data.get(), matrix.data(), size_tensor(),
                                     cudaMemcpyHostToDevice, stream);
   if (err != 0) {
     throw std::runtime_error("Error copy arrays to device");
@@ -17,14 +17,14 @@ CudaMatrix::CudaMatrix(const Eigen::MatrixXd &matrix,
 
 CudaMatrix::CudaMatrix(Index nrows, Index ncols, const cudaStream_t &stream)
     : _rows{static_cast<Index>(nrows)}, _cols{static_cast<Index>(ncols)} {
-  _data = eigencuda::alloc_tensor_in_gpu(size_matrix());
+  _data = this->alloc_tensor_in_gpu(size_tensor());
   _stream = stream;
 }
 
 CudaMatrix::operator Eigen::MatrixXd() const {
   Eigen::MatrixXd result = Eigen::MatrixXd::Zero(this->rows(), this->cols());
   eigencuda::checkCuda(cudaMemcpyAsync(result.data(), this->data(),
-                                       this->size_matrix(),
+                                       this->size_tensor(),
                                        cudaMemcpyDeviceToHost, this->_stream));
   eigencuda::checkCuda(cudaStreamSynchronize(this->_stream));
   return result;

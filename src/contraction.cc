@@ -1,5 +1,4 @@
 
-#include "memory_manager.hpp"
 #include <cutensor.h>
 #include <iostream>
 #include <unordered_map>
@@ -69,13 +68,13 @@ int main() {
   size_t sizeB = sizeof(double) * tensorB.size();
   size_t sizeC = sizeof(double) * tensorC.size();
 
-  // Allocate on device
-  eigencuda::Unique_ptr_to_GPU_data A_in_gpu =
-      eigencuda::alloc_tensor_in_gpu(sizeA);
-  eigencuda::Unique_ptr_to_GPU_data B_in_gpu =
-      eigencuda::alloc_tensor_in_gpu(sizeB);
-  eigencuda::Unique_ptr_to_GPU_data C_in_gpu =
-      eigencuda::alloc_tensor_in_gpu(sizeC);
+//   // Allocate on device
+//   eigencuda::Unique_ptr_to_GPU_data A_in_gpu =
+//       eigencuda::alloc_tensor_in_gpu(sizeA);
+//   eigencuda::Unique_ptr_to_GPU_data B_in_gpu =
+//       eigencuda::alloc_tensor_in_gpu(sizeB);
+//   eigencuda::Unique_ptr_to_GPU_data C_in_gpu =
+//       eigencuda::alloc_tensor_in_gpu(sizeC);
 
   // // Initialize data on host
   // for (int64_t i = 0; i < elementsA; i++)
@@ -89,13 +88,13 @@ int main() {
   // cudaMemcpy(C_in_gpu, tensorC, sizeC, cudaMemcpyHostToDevice);
   // cudaMemcpy(A_in_gpu, tensorA, sizeA, cudaMemcpyHostToDevice);
   // cudaMemcpy(B_in_gpu, tensorB, sizeB, cudaMemcpyHostToDevice);
-  eigencuda::checkCuda(cudaMemcpy(A_in_gpu.get(), tensorA.data(), sizeA,
-                                  cudaMemcpyHostToDevice));
-  eigencuda::checkCuda(cudaMemcpy(B_in_gpu.get(), tensorB.data(), sizeB,
-                                  cudaMemcpyHostToDevice));
+//   eigencuda::checkCuda(cudaMemcpy(A_in_gpu.get(), tensorA.data(), sizeA,
+//                                   cudaMemcpyHostToDevice));
+//   eigencuda::checkCuda(cudaMemcpy(B_in_gpu.get(), tensorB.data(), sizeB,
+//                                   cudaMemcpyHostToDevice));
 
-  eigencuda::checkCuda(cudaMemcpy(C_in_gpu.get(), tensorC.data(), sizeC,
-                                  cudaMemcpyHostToDevice));
+//   eigencuda::checkCuda(cudaMemcpy(C_in_gpu.get(), tensorC.data(), sizeC,
+//                                   cudaMemcpyHostToDevice));
 
   std::cout << "Allocate, initialize and transfer tensors\n";
 

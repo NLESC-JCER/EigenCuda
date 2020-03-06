@@ -1,4 +1,4 @@
-#include <memory_manager.hpp>
+#include <cudatensorbase.hpp>
 #include <sstream>
 
 namespace eigencuda {
@@ -18,16 +18,18 @@ Index count_available_gpus() {
   return 0 ? (err != cudaSuccess) : Index(count);
 }
 
-Unique_ptr_to_GPU_data alloc_tensor_in_gpu(size_t size_tensor) {
+CudaTensorBase::Unique_ptr_to_GPU_data CudaTensorBase::alloc_tensor_in_gpu(
+    size_t size_tensor) const {
   double *dtensor;
-  throw_if_not_enough_memory_in_gpu(size_tensor);
+  this->throw_if_not_enough_memory_in_gpu(size_tensor);
   checkCuda(cudaMalloc(&dtensor, size_tensor));
   Unique_ptr_to_GPU_data dev_ptr(dtensor,
                                  [](double *x) { checkCuda(cudaFree(x)); });
   return dev_ptr;
 }
 
-void throw_if_not_enough_memory_in_gpu(size_t requested_memory) {
+void CudaTensorBase::throw_if_not_enough_memory_in_gpu(
+    size_t requested_memory) const {
   size_t free, total;
   checkCuda(cudaMemGetInfo(&free, &total));
 
