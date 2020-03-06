@@ -3,8 +3,8 @@
 
 #include <cuda_runtime.h>
 #include <cudatensorbase.hpp>
-#include <unsupported/Eigen/CXX11/Tensor>
 #include <memory>
+#include <unsupported/Eigen/CXX11/Tensor>
 
 /**
  * \brief Manage the tensor memory in the GPU
@@ -12,28 +12,15 @@
 
 namespace eigencuda {
 
-/* // Check the return value of the cuda operations
-cudaError_t checkCuda(cudaError_t result);
-
-// Unique pointer with custom delete function
-using Unique_ptr_to_GPU_data = std::unique_ptr<double, void (*)(double *)>;
-
-// Int64
-using Index = Eigen::Index;
- */
-
-// /**
-//  * \brief Number of GPUs on the host
-//  */
-// Index count_available_gpus();
-
 class CudaTensor : CudaTensorBase {
  public:
   CudaTensor() = default;
 
-  Index size() const override { return 0; };
+  Index size() const override;
 
- protected:
+ private:
+  // vector of dimensions;
+  const Eigen::Tensor<float, 3>::Dimensions _dimensions;
   /**
    * \brief Copy the tensor to the GPU
    */
