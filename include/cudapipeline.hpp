@@ -2,7 +2,7 @@
 #define CUDA_PIPELINE__H
 
 #include "cudamatrix.hpp"
-
+#include <cublas_v2.h>
 /*
  * \brief Perform Tensor-matrix multiplications in a GPU
  *
