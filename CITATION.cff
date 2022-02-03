@@ -10,7 +10,7 @@ authors:
     family-names: Renaud
     given-names: Nicolas
     orcid: "https://orcid.org/0000-0001-9589-2694"
-cff-version: "1.0.3"
+cff-version: 1.2.0
 date-released: 2020-02-10
 keywords: 
   - Eigen
